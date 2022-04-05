@@ -90,9 +90,38 @@ Before I do this tho, I think I need to go through the process where I esitmate 
 FREQUENTIST WORLDVIEW
 ```{r}
 #fit a logistic model?
-sable_glm <- glm(data ~ LONGITUDE + LATITUDE, data=Sable_geo_df_binary, family=binomial(link=logit))
+sable_glm_trend_1 <- glm(data ~ LONGITUDE + LATITUDE, data=Sable_geo_df_binary, family=binomial(link=logit))
 
-summary(sable_glm) #all the things are singificant
+sable_glm_1_int <-  glm(data ~ LONGITUDE + LATITUDE + LONGITUDE:LATITUDE, data=Sable_geo_df_binary, family=binomial(link=logit))
+
+sable_glm_trend_2_int <- glm(data ~ LONGITUDE + LATITUDE + I(LONGITUDE^2) + I(LATITUDE^2) + LONGITUDE:LATITUDE, data=Sable_geo_df_binary, family=binomial(link=logit))
+
+sable_glm_2_noint <- glm(data ~ LONGITUDE + LATITUDE + I(LONGITUDE^2) + I(LATITUDE^2) , data=Sable_geo_df_binary, family=binomial(link=logit))
+
+sable_glm_no_trend <- glm(data ~ 1, data=Sable_geo_df_binary, family=binomial(link=logit))
+
+summary(sable_glm_trend_1) #all the things are singificant
+summary(sable_glm_1_int) #interactions are a thing tho
+summary(sable_glm_trend_2_int)#none the things are significant
+summary(sable_glm_2_noint) #this one is really good actually. but I;d probably drop LONG^2 if given the option
+summary(sable_glm_no_trend) #nope
+plot(Sable_geo_binary)
+
+max(Sable_geo_df_binary$LATITUDE)
+
+boxwid <- 1
+
+my_grid <- pred_grid(  #MAKE THE PREDICTED GRID BE NICE ROUND NUMBERS... choose a nult of the boxwidth
+  c(-10, 15),
+  c(50, 55),
+  by=boxwid
+) #i think these values are fine
+
+dim(my_grid)
+
+my_variog_sable<- variog(Sable_geo_binary, trend="1st") 
+my_variog_sable_2<- variog(Sable_geo_binary, trend="2nd") 
+
 
 ```
 
