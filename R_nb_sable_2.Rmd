@@ -117,12 +117,30 @@ my_grid <- pred_grid(  #MAKE THE PREDICTED GRID BE NICE ROUND NUMBERS... choose 
   by=boxwid
 ) #i think these values are fine
 
+
+
 dim(my_grid)
 
 my_variog_sable<- variog(Sable_geo_binary, trend="1st") 
 my_variog_sable_2<- variog(Sable_geo_binary, trend="2nd") 
 
+plot(my_variog_sable)
+plot(my_variog_sable_2)
+#
+#both look weird
+##gonna roll with trend=1st for now.
 
+##Variofit for the WLS estimate
+my_WLS_sable <- variofit(my_variog_sable,
+                        ini.cov.pars = c(0.11, 10), #sill, then range estimates
+                        cov.model="exponential",
+                        fix.nugget=F,
+                        max.dist = 300 #plot gets weird after 300
+                        )
+
+##plot it over your variog
+plot(my_variog_sable)
+lines(my_WLS_sable) #looks like a good fit to me.
 ```
 
 
@@ -130,4 +148,12 @@ my_variog_sable_2<- variog(Sable_geo_binary, trend="2nd")
 
 AND check for spatial autocorrelation!! How to do this again? A variogram??
 
+BACK To BAYESIAN
+spGLM
+```{r}
+  m.1 <- spGLM(data~LONGITUDE + LATITUDE, family="binomial", coords=coords, weights=weights, starting=list("beta"=beta.starting, "phi"=0.06,"sigma.sq"=1, "w"=0),
+                 tuning=list("beta"=beta.tuning, "phi"=0.5, "sigma.sq"=0.5, "w"=0.5),
+priors=list("beta.Normal"=list(0,10), "phi.Unif"=c(0.03, 0.3), "sigma.sq.IG"=c(2, 1)), amcmc=list("n.batch"=n.batch, "batch.length"=batch.length, "accept.rate"=0.43),
+                 cov.model="exponential", verbose=TRUE, n.report=10)
+```
 
