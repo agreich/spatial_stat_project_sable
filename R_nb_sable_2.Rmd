@@ -1,0 +1,33 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+FIRST: run the stats_proj_sablefish scriptfile.
+
+For some reason, it's not working well with Rnotebook.
+
+So, run that scriptfile first, and now I'll try working in R notebook.
+
+
+Treat the data as geostatisitcal data
+conduct a Spatial Logistic Regression
+and use the spBayes package
+
+My datafile name is: Sable_geo
+
+So, logistic regression means we either use 0 or 1 for the data. I think I'll need to manipulate the Sable_geo data to reflect this.
+
+```{r}
+names(Sable_geo)
+Sable_geo$data
+length(Sable_geo$data)
+
+#I can do this with a for loop.. or with mutate
+Sable_geo_df_2 <- as.data.frame(Sable_geo)
+Sable_geo_df_binary <- Sable_geo_df_2 %>% mutate(data = ifelse(data>0, 1, 0))
+length(Sable_geo_df_binary$data)
+
+Sable_geo_binary <- as.geodata(Sable_geo_df_binary)
+##warning that there's some overlapping locations. I shold think about getting rid of duplicates?
+```
+

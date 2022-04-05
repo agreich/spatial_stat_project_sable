@@ -2,21 +2,108 @@
 title: "R Notebook"
 output: html_notebook
 ---
+Github works today!!
 
 
 
-
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
-
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+Initial load in the data.
 
 ```{r}
-plot(cars)
+Groundfish <- read.csv("ai2014_2018.csv")
+names(Groundfish)
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+Load some packages
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(geoR)
+```
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+Filter data to create sablefish dataframe
+```{r}
+#unique(Groundfish$COMMON)
+Sablefish <- Groundfish %>% filter(COMMON == "sablefish")
+names(Sablefish)
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+#more data manipulation
+length(Sablefish$LATITUDE)
+names(Sablefish)
+Sablefish_relevant <- Sablefish[c(2,1,8)]
+
+
+#more data manipulation
+#the challenge of creating a geodata object so I can plot it
+length(Sablefish$LATITUDE)
+names(Sablefish)
+Sablefish_relevant <- Sablefish[c(2,1,8)] #got the relevant data frame here
+###you may want to add more
+#Sable.matrix <- as.matrix(data=c(Sablefish$LONGITUDE, Sablefish$LATITUDE, ),nrow=162)
+#make a matric
+Sable_matrix <- as.matrix(Sablefish_relevant) #that worked!!
+Sable_geo <- as.geodata(Sable_matrix) #now create the geodata objec
+```
+
+
+Create a geodata object so I can plot it
+```{r}
+Sable_matrix <- as.matrix(Sablefish_relevant) #that worked!!
+Sable_geo <- as.geodata(Sable_matrix) #now create the geodata object
+```
+
+
+Need to do some more data wrangling. I need to account for the 0's (no catches of sablefish, but attempt at a catch) in my data.
+
+Data wrangling
+```{r}
+names(Sablefish)
+Sablefish_survey_df <- Sablefish[c(16,17)]
+Sablefish
+#surveys total
+Groundfish$HAUL
+
+
+#unite
+SableID1 <- unite(Sablefish_survey_df, ID_new, CRUISE:HAUL)
+names(Sablefish_survey_df)
+head(Sablefish_survey_df)
+
+Groundfish_survey_ID <- Groundfish[c(16,17)]
+
+GroundID1<- unite(data=Groundfish_survey_ID, col=ID_new, CRUISE:HAUL)
+
+GroundID <-as.factor(GroundID1$ID_new)
+SableID <- as.factor(SableID1$ID_new)
+nosable <- unique(setdiff(GroundID, SableID))
+length(unique(GroundID))
+length(nosable)
+length(unique(SableID)) #not the same as sable ID. I do not know why
+
+
+#seemed to work. not let's find the coords for nosable
+Groundfish$ID_new <- GroundID #a factor
+names(Groundfish)
+head(Groundfish)
+#does intersect work here
+nosable.df <- Groundfish %>% intersect(GroundID, nosable)
+nosable.df <- nosable %in% Groundfish$ID_new #HELP
+
+Groundfish_locations_nosable <- Groundfish %>% filter(GroundID %in% c(nosable))
+#THANK YOU MATT!!
+names(Groundfish_locations_nosable)
+Groundfish_locations_nosable_coords <- unique(Groundfish_locations_nosable[c(2,1,18)])
+Groundfish_locations_nosable_coords2 <- unique(Groundfish_locations_nosable[c(2,1)])
+length(Groundfish$LATITUDE)
+length(Groundfish_locations_nosable_coords$LATITUDE)
+length(unique(Groundfish_locations_nosable_coords$ID_new))
+length(Groundfish_locations_nosable_coords2$LATITUDE)
+
+head(Groundfish_locations_nosable_coords)
+names(Groundfish_locations_nosable_coords)
+head(Sable_matrix)
+Groundfish_locations_nosable_coords$NUMCPUE <- rep(0, 993)
+Nosable_matrix_prep <- Groundfish_locations_nosable_coords[-3]
+
+```
 
