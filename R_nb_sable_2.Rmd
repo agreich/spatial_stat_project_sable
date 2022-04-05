@@ -31,3 +31,69 @@ Sable_geo_binary <- as.geodata(Sable_geo_df_binary)
 ##warning that there's some overlapping locations. I shold think about getting rid of duplicates?
 ```
 
+
+Ok so now I have a binary dataframe and binary geodataframe. We can do logistic regression on this...
+It uses the logit tranformation
+
+
+Might be useful to do this as bayes and not based methods
+Where's my plot of alaska??
+IDK
+There's a ggplot way.
+I think I can skip this
+Reference: https://hughst.github.io/week-6/
+
+
+Ooh, I do make a model!
+A linear model or a glm?
+GLM
+```{r}
+names(Sable_geo_df_binary)
+glm_mod_1 <- glm(data ~ LONGITUDE + LATITUDE, data=Sable_geo_df_binary, family=binomial())
+summary(glm_mod_1)
+
+ggplot() + geom_point(aes(glm_mod_1$fitted, Sable_geo_df_binary$data))
+```
+I think glms are not in bayes though
+Looks like there are spatial trends
+
+```{r}
+
+```
+
+
+AND I need to check for spatial autocorrelation
+
+
+OK... Trying spbayes
+```{r}
+library(spBayes)
+
+```
+
+Which fucntions do I need?
+spMvGLm fits multivariate Bayesian generalized linear spatioal regression models
+-> might be this one
+
+spGLM - > best one yet. OR GLM USE THIS ONE!!
+
+```{r}
+?spGLM
+#how to do a spatial logitic regression with this thoug?
+#phi <-
+#sigma_sq <-
+
+```
+
+
+Before I do this tho, I think I need to go through the process where I esitmate a phi and sigma squared without using bayesian techniques. I think this is HW 3 and 4, with scallops and wolfcamp
+```{r}
+
+```
+
+
+
+
+AND check for spatial autocorrelation!! How to do this again? A variogram??
+
+
