@@ -87,7 +87,12 @@ spGLM - > best one yet. OR GLM USE THIS ONE!!
 
 
 Before I do this tho, I think I need to go through the process where I esitmate a phi and sigma squared without using bayesian techniques. I think this is HW 3 and 4, with scallops and wolfcamp
+FREQUENTIST WORLDVIEW
 ```{r}
+#fit a logistic model?
+sable_glm <- glm(data ~ LONGITUDE + LATITUDE, data=Sable_geo_df_binary, family=binomial(link=logit))
+
+summary(sable_glm) #all the things are singificant
 
 ```
 
