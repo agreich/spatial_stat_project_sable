@@ -151,9 +151,61 @@ AND check for spatial autocorrelation!! How to do this again? A variogram??
 BACK To BAYESIAN
 spGLM
 ```{r}
-  m.1 <- spGLM(data~LONGITUDE + LATITUDE, family="binomial", coords=coords, weights=weights, starting=list("beta"=beta.starting, "phi"=0.06,"sigma.sq"=1, "w"=0),
+#my binary dataframe:
+##Sable_geo_df_binary
+
+phi <- 3/50 #i think I need to find estimates for these
+sigma.sq <- 2
+
+
+####some other stuff above, not sure how important
+m.1 <- spGLM(data~LONGITUDE + LATITUDE, family="binomial", coords=coords, weights=weights, starting=list("beta"=beta.starting, "phi"=0.06,"sigma.sq"=1, "w"=0),
                  tuning=list("beta"=beta.tuning, "phi"=0.5, "sigma.sq"=0.5, "w"=0.5),
 priors=list("beta.Normal"=list(0,10), "phi.Unif"=c(0.03, 0.3), "sigma.sq.IG"=c(2, 1)), amcmc=list("n.batch"=n.batch, "batch.length"=batch.length, "accept.rate"=0.43),
                  cov.model="exponential", verbose=TRUE, n.report=10)
+```
+
+
+```{r}
+library(spBayes)
+?spGLM
+
+m.2 <- spGLM(data~LONGITUDE + LATITUDE, family="binomial", coords=Sable_geo_binary$coords,  starting=list("beta"=beta.starting, "phi"=0.06,"sigma.sq"=1), #need to add somehthing here!! ##what is beta starting
+                 tuning=list("beta"=beta.tuning, "phi"=0.5, "sigma.sq"=0.5),
+priors=list("beta.Normal"=list(0,10), "phi.Unif"=c(0.03, 0.3), "sigma.sq.IG"=c(2, 1)), amcmc=list("n.batch"=n.batch, "batch.length"=batch.length, "accept.rate"=0.43),
+                 cov.model="exponential", verbose=TRUE, n.report=10)
+                 
+                 
+                 
+m.3 <- spGLM(data~LONGITUDE + LATITUDE, family="binomial", coords=Sable_geo_binary$coords, data=Sable_geo_df_binary, n.samples = 100, cov.model="exponential",
+             starting=list("phi"=0.5,"sigma.sq"=1), priors=list("phi.Unif"=c(0.03, 0.3), "sigma.sq.IG"=c(2,1)), tuning=list("phi"=0.5, "sigma.sq"=0.5, "beta"= )) # starting=list("beta"=beta.starting, "phi"=0.06,"sigma.sq"=1), #need to add somehthing here!! ##what is beta starting
+                # tuning=list("beta"=beta.tuning, "phi"=0.5, "sigma.sq"=0.5),
+#priors=list("beta.Normal"=list(0,10), "phi.Unif"=c(0.03, 0.3), "sigma.sq.IG"=c(2, 1)), amcmc=list("n.batch"=n.batch, "batch.length"=batch.length, "accept.rate"=0.43),
+                 #cov.model="exponential", verbose=TRUE, n.report=10)
+```
+
+Epiphany: bayesian 04/06/22
+p. 37 of spBayes documentation
+```{r}
+fit <- glm(data~LONGITUDE + LATITUDE, family=binomial(link=logit), data=Sable_geo_df_binary)
+beta.starting <- coef(fit)
+beta.tuning <- t(chol(vcov(fit)))
+
+
+n.batch <- 200
+batch.length <- 50
+n.samples <- n.batch*batch.length
+
+m.4 <- spGLM(data~LONGITUDE + LATITUDE, family="binomial", coords=Sable_geo_binary$coords, data=Sable_geo_df_binary, n.samples = 100, cov.model="exponential",
+             starting=list("phi"=0.5,"sigma.sq"=1, "beta"=beta.starting), priors=list("phi.Unif"=c(0.03, 0.3), "sigma.sq.IG"=c(2,1)), tuning=list("phi"=0.5, "sigma.sq"=0.5, "beta"= beta.tuning, "w" = 0.05),
+  amcmc=list("n.batch"=n.batch, "batch.length"=batch.length, "accept.rate"=0.43),
+                 verbose=TRUE, n.report=10)
+
+```
+
+Ok, I made some progress!! Now ley;s figure out which starting values to use for w, phi, sigmasq
+Which is the... rnage parameter (phi), w is something I forgot, and sigma sq is the sill, I think!
+```{r}
+
 ```
 
