@@ -347,7 +347,52 @@ Crap. Cholessky failed again in spGLM
 --> maybe let's delete the overlap instead of jittering the overlap!
 
 AGAIN!
+ 1. Create new df without duplicates
 ```{r}
+###MESSED UP AT FIRST
+#Sable_geo_binary
+#Sable_geo_df_binary
+library(dplyr)
+#Sable_geo_df_bin_noduplicates <- Sable_geo_df_binary %>% distinct(Sable_geo_df_binary$coords) #OK, HERE IS MY NONDUPLICATED GEODATAFRAME
+#length(Sable_geo_df_binary[,1]) #1150
+#length(Sable_geo_df_bin_noduplicates[,1]) #1148
 
+#that's not working
+#R SUGGESTION:
+#use dup.coords() to locate duplicated coodiantes
+#use jitterDupCoords for jittering replicated locations
+#dup.coords(Sable_geo_df_bin_noduplicated)
+#length(Sable_geo_binary_noduplicates$data)
+
+##AND THEN SUCCESS WITH THE JITTER
+#coord.df <-data.frame(Sable_geo_df_binary$LONGITUDE, Sable_geo_df_binary$LATITUDE )
+#Sable_coord_jitter <- jitterDupCoords(coord.df, max=0.01) #can change max to bigger, see if that changes thigns
+#Sable_coord_jitter$data <- Sable_geo_df_binary$data
+
+#Sable_coord_binary_jitter_gdf <- as.geodata(Sable_coord_jitter)
+#dup.coords(Sable_coord_binary_jitter_gdf)
+
+Sable_geo_distinct <- distinct(Sable_geo_df_binary)
+dup.coords(Sable_geo_distinct)
+Sable_tmp <- distinct(Sable_geo_distinct[,1:2])
+dup.coords(Sable_tmp) #ok so that worked, got my coords
+dat <- Sable_geo_distinct$data
+length(dat)
+dat <- dat[-1148]
+length(dat) #got rid of the extra one
+Sable_tmp$data <- dat
+Sable_geo_distinct_altered <- Sable_tmp  ##LETS ROLL WITH THIS!! ##WHOOHOO
+
+#need to find and delete the duplicate
+#Sable_geo_distinct[which(!dup.coords(Sable_geo_distinct$id))]
+#Sable_geo_distinct[]
+##UGH!!
+#remove.duplicates
+
+
+#ok, back from a break, for just a little bit more coding
+#Let's remove those duplicated coords.
+#REMVOE "X15585"
+Sable_geo_distinct["X15585",]
+Sable_geo_distinct2 <- Sable_geo_distinct["X15585",]
 ```
-
