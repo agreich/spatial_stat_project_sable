@@ -208,14 +208,28 @@ beta.tuning <- t(chol(vcov(fit)))
 #sable_WLS_phi
 #sable_WLS_sigsq
 
+###
+
+
+
 n.batch <- 200
 batch.length <- 50
 n.samples <- n.batch*batch.length
 
 m.4 <- spGLM(data~LONGITUDE + LATITUDE, family="binomial", coords=Sable_geo_binary$coords, data=Sable_geo_df_binary, n.samples = 100, cov.model="exponential",
-             starting=list("phi"=sable_WLS_phi,"sigma.sq"=sable_WLS_sigsq, "beta"=beta.starting, "w"= sable_WLS_w), priors=list("phi.Unif"=c(1, 2), "sigma.sq.IG"=c(2,1), "w"=c(0.5, 2)), tuning=list("phi"=0.5, "sigma.sq"=0.5, "beta"= beta.tuning, "w" = 0.5),
+             starting=list("phi"=sable_WLS_phi,"sigma.sq"=sable_WLS_sigsq, "beta"=beta.starting, "w"= sable_WLS_w), priors=list("phi.Unif"=c(1, 2), "sigma.sq.IG"=c(2,1), 
+                                                                                                                                #"beta.Normal"=list(0,10)), 
+                                                                                                                          "beta.Normal"=list(c(0,0,0),c(10,10,10))),
+             tuning=list("phi"=0.5, "sigma.sq"=0.5, "beta"= beta.tuning, "w" = 0.5), #for metropolis proposals. May need to adjust
   amcmc=list("n.batch"=n.batch, "batch.length"=batch.length, "accept.rate"=0.43),
                  verbose=TRUE, n.report=10)
+
+#failing because there are repeats at the same location
+##try getting rid of these and see if thtat works
+
+#if that doesn't work.. Try getting rid of the super super close location
+
+#if THAT doesn't work... something about the range of the semivariogram, if range parameter is on the big size, locations.... try after the other things
 
 ```
 
