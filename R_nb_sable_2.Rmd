@@ -141,8 +141,20 @@ my_WLS_sable <- variofit(my_variog_sable,
 ##plot it over your variog
 plot(my_variog_sable)
 lines(my_WLS_sable) #looks like a good fit to me.
+
+names(my_WLS_sable)
+sable.cov.pars <- my_WLS_sable$cov.pars #sigsq, then phi
+sable_WLS_sigsq <- sable.cov.pars[1]
+sable_WLS_phi <- sable.cov.pars[2]
+sable_WLS_tao_sq <- my_WLS_sable$nugget
+sable_WLS_w <- sable_WLS_tao_sq/sable_WLS_sigsq
 ```
 
+
+Add other frequentist models?
+```{r}
+#add other 
+```
 
 
 
@@ -154,8 +166,8 @@ spGLM
 #my binary dataframe:
 ##Sable_geo_df_binary
 
-phi <- 3/50 #i think I need to find estimates for these
-sigma.sq <- 2
+#phi <- 3/50 #i think I need to find estimates for these
+#sigma.sq <- 2
 
 
 ####some other stuff above, not sure how important
@@ -186,18 +198,22 @@ m.3 <- spGLM(data~LONGITUDE + LATITUDE, family="binomial", coords=Sable_geo_bina
 
 Epiphany: bayesian 04/06/22
 p. 37 of spBayes documentation
+what does w equal again? sigma/tao?
+w=taosq/sigmasq!!!!
 ```{r}
 fit <- glm(data~LONGITUDE + LATITUDE, family=binomial(link=logit), data=Sable_geo_df_binary)
 beta.starting <- coef(fit)
 beta.tuning <- t(chol(vcov(fit)))
 
+#sable_WLS_phi
+#sable_WLS_sigsq
 
 n.batch <- 200
 batch.length <- 50
 n.samples <- n.batch*batch.length
 
 m.4 <- spGLM(data~LONGITUDE + LATITUDE, family="binomial", coords=Sable_geo_binary$coords, data=Sable_geo_df_binary, n.samples = 100, cov.model="exponential",
-             starting=list("phi"=0.5,"sigma.sq"=1, "beta"=beta.starting), priors=list("phi.Unif"=c(0.03, 0.3), "sigma.sq.IG"=c(2,1)), tuning=list("phi"=0.5, "sigma.sq"=0.5, "beta"= beta.tuning, "w" = 0.05),
+             starting=list("phi"=sable_WLS_phi,"sigma.sq"=sable_WLS_sigsq, "beta"=beta.starting, "w"= sable_WLS_w), priors=list("phi.Unif"=c(1, 2), "sigma.sq.IG"=c(2,1), "w"=c(0.5, 2)), tuning=list("phi"=0.5, "sigma.sq"=0.5, "beta"= beta.tuning, "w" = 0.5),
   amcmc=list("n.batch"=n.batch, "batch.length"=batch.length, "accept.rate"=0.43),
                  verbose=TRUE, n.report=10)
 

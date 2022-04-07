@@ -8,6 +8,7 @@ names(Groundfish)
 library(ggplot2)
 library(dplyr)
 library(tidyverse)
+library(dplyr)
 
 #filter some data
 unique(Groundfish$COMMON)
@@ -68,7 +69,7 @@ Groundfish$ID_new <- GroundID #a factor
 names(Groundfish)
 head(Groundfish)
 #does intersect work here
-nosable.df <- Groundfish %>% intersect(ID_new, nosable)
+#nosable.df <- Groundfish %>% intersect(GroundID, nosable)
 nosable.df <- nosable %in% Groundfish$ID_new #HELP
 
 Groundfish_locations_nosable <- Groundfish %>% filter(ID_new %in% c(nosable))
