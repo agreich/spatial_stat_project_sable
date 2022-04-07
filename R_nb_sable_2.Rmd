@@ -307,10 +307,15 @@ plot(my_variog_sable_jitter)
 lines(my_WLS_sable_jitter) #looks like a good fit to me.
 
 names(my_WLS_sable_jitter)
-sable.cov.pars <- my_WLS_sable$cov.pars #sigsq, then phi
-sable_WLS_sigsq <- sable.cov.pars[1]
-sable_WLS_phi <- sable.cov.pars[2]
-sable_WLS_tao_sq <- my_WLS_sable$nugget
-sable_WLS_w <- sable_WLS_tao_sq/sable_WLS_sigsq
+sable.cov.pars_j <- my_WLS_sable_jitter$cov.pars #sigsq, then phi
+sable_WLS_sigsq_j <- sable.cov.pars_j[1]
+sable_WLS_phi_j <- sable.cov.pars_j[2]
+sable_WLS_tao_sq_j <- my_WLS_sable_jitter$nugget
+sable_WLS_w_j <- sable_WLS_tao_sq_j/sable_WLS_sigsq_j
+```
+
+
+```{r}
+
 ```
 
