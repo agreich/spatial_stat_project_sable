@@ -314,8 +314,24 @@ sable_WLS_tao_sq_j <- my_WLS_sable_jitter$nugget
 sable_WLS_w_j <- sable_WLS_tao_sq_j/sable_WLS_sigsq_j
 ```
 
-
+ 3- logistic regression, for beta values (GLM)
 ```{r}
+#using gdf: Sable_coord_binary_jitter_gdf
+names(Sable_coord_binary_jitter_gdf)
+fit_j <- glm(data~Sable_geo_df_binary.LONGITUDE + Sable_geo_df_binary.LATITUDE, family=binomial(link=logit), data=Sable_coord_binary_jitter_gdf)
+beta.starting_j <- coef(fit_j)
+beta.tuning_j <- t(chol(vcov(fit_j)))
+
+
+#got my betas
 
 ```
+
+ 4- and then see if the spGLM runs
+```{r}
+n.batch <- 200
+batch.length <- 50
+n.samples <- n.batch*batch.length
+```
+ 
 
