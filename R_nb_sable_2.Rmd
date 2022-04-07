@@ -233,9 +233,37 @@ m.4 <- spGLM(data~LONGITUDE + LATITUDE, family="binomial", coords=Sable_geo_bina
 
 ```
 
-Ok, I made some progress!! Now ley;s figure out which starting values to use for w, phi, sigmasq
-Which is the... rnage parameter (phi), w is something I forgot, and sigma sq is the sill, I think!
-```{r}
 
+04/07/22
+Yesterday I figured out my starting values.
+I keep getting this code: Cholesky failed in spGLM. This could mean it's failing due to overlapping values. I'll try making a new dataframe without duplicates, find new parameters for this, and basically just run everything again.
+
+Steps:
+ 1- create new df without duplicates
+ 2- emprical varigram and WLS parameter estimates
+ 3- logistic regression, for beta values (GLM)
+ 4- and then see if the spGLM runs
+ 
+ 1. Create new df without duplicates
+```{r}
+###MESSED UP AT FIRST
+#Sable_geo_binary
+#Sable_geo_df_binary
+library(dplyr)
+#Sable_geo_df_bin_noduplicates <- Sable_geo_df_binary %>% distinct(Sable_geo_df_binary$coords) #OK, HERE IS MY NONDUPLICATED GEODATAFRAME
+#length(Sable_geo_df_binary[,1]) #1150
+#length(Sable_geo_df_bin_noduplicates[,1]) #1148
+
+#that's not working
+#R SUGGESTION:
+#use dup.coords() to locate duplicated coodiantes
+#use jitterDupCoords for jittering replicated locations
+#dup.coords(Sable_geo_df_bin_noduplicated)
+#length(Sable_geo_binary_noduplicates$data)
+
+##AND THEN SUCCESS WITH THE JITTER
+Sable_geo_df_jitter <- dup.coords(Sable_geo_df_binary)
+dup.coords(Sable_geo_binary)
+dup.coords(Sable_geo_df_jitter) #IT WORKED
 ```
 
