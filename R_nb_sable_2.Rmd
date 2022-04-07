@@ -262,8 +262,55 @@ library(dplyr)
 #length(Sable_geo_binary_noduplicates$data)
 
 ##AND THEN SUCCESS WITH THE JITTER
-Sable_geo_df_jitter <- dup.coords(Sable_geo_df_binary)
-dup.coords(Sable_geo_binary)
-dup.coords(Sable_geo_df_jitter) #IT WORKED
+coord.df <-data.frame(Sable_geo_df_binary$LONGITUDE, Sable_geo_df_binary$LATITUDE )
+Sable_coord_jitter <- jitterDupCoords(coord.df, max=0.01) #can change max to bigger, see if that changes thigns
+Sable_coord_jitter$data <- Sable_geo_df_binary$data
+
+Sable_coord_binary_jitter_gdf <- as.geodata(Sable_coord_jitter)
+dup.coords(Sable_coord_binary_jitter_gdf)
+
+```
+
+2. Empirical variogram and WLS to get parameter estimats (sigsq, w(tao/sigsq, i think...), and phi)
+```{r}
+boxwid <- 1
+
+my_grid <- pred_grid(  
+  c(-10, 15),
+  c(50, 55),
+  by=boxwid
+) #These are the same as the grid before
+
+
+
+dim(my_grid)
+
+my_variog_sable_jitter<- variog(Sable_coord_binary_jitter_gdf, trend="1st") 
+#my_variog_sable_2<- variog(Sable_geo_binary, trend="2nd") 
+
+plot(my_variog_sable_jitter)
+#plot(my_variog_sable_2)
+#
+#both look weird
+##gonna roll with trend=1st for now.
+
+##Variofit for the WLS estimate
+my_WLS_sable_jitter <- variofit(my_variog_sable_jitter,
+                        ini.cov.pars = c(0.11, 7), #sill, then range estimates
+                        cov.model="exponential",
+                        fix.nugget=F,
+                        max.dist = 300 #plot gets weird after 300
+                        )
+
+##plot it over your variog
+plot(my_variog_sable_jitter)
+lines(my_WLS_sable_jitter) #looks like a good fit to me.
+
+names(my_WLS_sable_jitter)
+sable.cov.pars <- my_WLS_sable$cov.pars #sigsq, then phi
+sable_WLS_sigsq <- sable.cov.pars[1]
+sable_WLS_phi <- sable.cov.pars[2]
+sable_WLS_tao_sq <- my_WLS_sable$nugget
+sable_WLS_w <- sable_WLS_tao_sq/sable_WLS_sigsq
 ```
 
