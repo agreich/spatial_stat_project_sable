@@ -352,6 +352,8 @@ AGAIN!
 ###MESSED UP AT FIRST
 #Sable_geo_binary
 #Sable_geo_df_binary
+library(splancs)
+library(geoR)
 library(dplyr)
 #Sable_geo_df_bin_noduplicates <- Sable_geo_df_binary %>% distinct(Sable_geo_df_binary$coords) #OK, HERE IS MY NONDUPLICATED GEODATAFRAME
 #length(Sable_geo_df_binary[,1]) #1150
@@ -393,8 +395,8 @@ Sable_geo_distinct_altered <- Sable_tmp  ##LETS ROLL WITH THIS!! ##WHOOHOO
 #ok, back from a break, for just a little bit more coding
 #Let's remove those duplicated coords.
 #REMVOE "X15585"
-Sable_geo_distinct["X15585",]
-Sable_geo_distinct2 <- Sable_geo_distinct["X15585",]
+#Sable_geo_distinct["X15585",]
+#Sable_geo_distinct2 <- Sable_geo_distinct["X15585",]
 ```
 
 And the rest, with
@@ -416,35 +418,40 @@ my_grid <- pred_grid(
 dim(my_grid)
 
 ##ERROR HERE , this is where I stop 4/7/22
-my_variog_sable_jitter<- variog(Sable_geo_distinct_altered, trend="1st") 
+class(Sable_geo_distinct_altered)
+Sable_geo_alt_matrix <- as.matrix(Sable_geo_distinct_altered[,1:3])
+Sable_gdf_alt <- as.geodata(Sable_geo_alt_matrix) #ok. here works
+
+my_variog_sable_altered<- variog(Sable_gdf_alt) 
 #my_variog_sable_2<- variog(Sable_geo_binary, trend="2nd") 
 
-plot(my_variog_sable_jitter)
+plot(my_variog_sable_altered)
 #plot(my_variog_sable_2)
 #
 #both look weird
 ##gonna roll with trend=1st for now.
 
 ##Variofit for the WLS estimate
-my_WLS_sable_jitter <- variofit(my_variog_sable_jitter,
+my_WLS_sable_alt <- variofit(my_variog_sable_altered,
                         ini.cov.pars = c(0.11, 7), #sill, then range estimates
-                        cov.model="exponential",
+                        cov.model="exponential", #can try changing this to other types of semivariograms eventually
                         fix.nugget=F,
                         max.dist = 300 #plot gets weird after 300
                         )
 
 ##plot it over your variog
-plot(my_variog_sable_jitter)
-lines(my_WLS_sable_jitter) #looks like a good fit to me.
+plot(my_variog_sable_altered)
+lines(my_WLS_sable_alt) #looks like a good fit to me.
 
-names(my_WLS_sable_jitter)
-sable.cov.pars_j <- my_WLS_sable_jitter$cov.pars #sigsq, then phi
-sable_WLS_sigsq_j <- sable.cov.pars_j[1]
-sable_WLS_phi_j <- sable.cov.pars_j[2]
-sable_WLS_tao_sq_j <- my_WLS_sable_jitter$nugget
-sable_WLS_w_j <- sable_WLS_tao_sq_j/sable_WLS_sigsq_j
+names(my_WLS_sable_alt)
+sable.cov.pars_alt <- my_WLS_sable_alt$cov.pars #sigsq, then phi
+sable_WLS_sigsq_alt <- sable.cov.pars_alt[1]
+sable_WLS_phi_alt <- sable.cov.pars_alt[2]
+sable_WLS_tao_sq_alt <- my_WLS_sable_alt$nugget
+sable_WLS_w_alt <- sable_WLS_tao_sq_alt/sable_WLS_sigsq_alt
 ```
 
+Sable_geo_alt_matrix -> main gdf right now
  3- logistic regression, for beta values (GLM)
 ```{r}
 #using gdf: Sable_coord_binary_jitter_gdf
