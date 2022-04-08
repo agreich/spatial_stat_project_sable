@@ -334,12 +334,15 @@ n.batch <- 200
 batch.length <- 50
 n.samples <- n.batch*batch.length
 
+n.batch2 <- 50 #shorter, will it work?
+batch.length2 <- 10
+
 #the spGLM attempt
 m.jitter <- spGLM(data~Sable_geo_df_binary.LONGITUDE + Sable_geo_df_binary.LATITUDE, family="binomial", coords=Sable_coord_binary_jitter_gdf$coords, data=Sable_coord_binary_jitter_gdf, n.samples = 100, cov.model="exponential",
              starting=list("phi"=sable_WLS_phi_j,"sigma.sq"=sable_WLS_sigsq_j, "beta"=beta.starting_j, "w"= sable_WLS_w_j), priors=list("phi.Unif"=c(1, 2), "sigma.sq.IG"=c(2,1), 
                                                                                                               "beta.Normal"=list(c(0,0,0),c(10,10,10))),
              tuning=list("phi"=0.5, "sigma.sq"=0.5, "beta"= beta.tuning_j, "w" = 0.5), #for metropolis proposals. May need to adjust
-  amcmc=list("n.batch"=n.batch, "batch.length"=batch.length, "accept.rate"=0.43),
+  amcmc=list("n.batch"=n.batch2, "batch.length"=batch.length2, "accept.rate"=0.43),
                  verbose=TRUE, n.report=10)
 ```
  
