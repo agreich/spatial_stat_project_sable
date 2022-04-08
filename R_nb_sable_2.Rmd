@@ -396,3 +396,81 @@ Sable_geo_distinct_altered <- Sable_tmp  ##LETS ROLL WITH THIS!! ##WHOOHOO
 Sable_geo_distinct["X15585",]
 Sable_geo_distinct2 <- Sable_geo_distinct["X15585",]
 ```
+
+And the rest, with
+Sable_geo_distinct_altered
+2
+3
+4
+```{r}
+boxwid <- 1
+
+my_grid <- pred_grid(  
+  c(-10, 15),
+  c(50, 55),
+  by=boxwid
+) #These are the same as the grid before
+
+
+
+dim(my_grid)
+
+##ERROR HERE , this is where I stop 4/7/22
+my_variog_sable_jitter<- variog(Sable_geo_distinct_altered, trend="1st") 
+#my_variog_sable_2<- variog(Sable_geo_binary, trend="2nd") 
+
+plot(my_variog_sable_jitter)
+#plot(my_variog_sable_2)
+#
+#both look weird
+##gonna roll with trend=1st for now.
+
+##Variofit for the WLS estimate
+my_WLS_sable_jitter <- variofit(my_variog_sable_jitter,
+                        ini.cov.pars = c(0.11, 7), #sill, then range estimates
+                        cov.model="exponential",
+                        fix.nugget=F,
+                        max.dist = 300 #plot gets weird after 300
+                        )
+
+##plot it over your variog
+plot(my_variog_sable_jitter)
+lines(my_WLS_sable_jitter) #looks like a good fit to me.
+
+names(my_WLS_sable_jitter)
+sable.cov.pars_j <- my_WLS_sable_jitter$cov.pars #sigsq, then phi
+sable_WLS_sigsq_j <- sable.cov.pars_j[1]
+sable_WLS_phi_j <- sable.cov.pars_j[2]
+sable_WLS_tao_sq_j <- my_WLS_sable_jitter$nugget
+sable_WLS_w_j <- sable_WLS_tao_sq_j/sable_WLS_sigsq_j
+```
+
+ 3- logistic regression, for beta values (GLM)
+```{r}
+#using gdf: Sable_coord_binary_jitter_gdf
+names(Sable_coord_binary_jitter_gdf)
+fit_j <- glm(data~Sable_geo_df_binary.LONGITUDE + Sable_geo_df_binary.LATITUDE, family=binomial(link=logit), data=Sable_coord_binary_jitter_gdf)
+beta.starting_j <- coef(fit_j)
+beta.tuning_j <- t(chol(vcov(fit_j)))
+
+
+#got my betas
+
+```
+
+ 4- and then see if the spGLM runs
+```{r}
+#the setup
+n.batch <- 200
+batch.length <- 50
+n.samples <- n.batch*batch.length
+
+#the spGLM attempt
+m.jitter <- spGLM(data~Sable_geo_df_binary.LONGITUDE + Sable_geo_df_binary.LATITUDE, family="binomial", coords=Sable_geo_binary$coords, data=Sable_coord_binary_jitter_gdf, n.samples = 100, cov.model="exponential",
+             starting=list("phi"=sable_WLS_phi_j,"sigma.sq"=sable_WLS_sigsq_j, "beta"=beta.starting_j, "w"= sable_WLS_w_j), priors=list("phi.Unif"=c(1, 2), "sigma.sq.IG"=c(2,1), 
+                                                                                                              "beta.Normal"=list(c(0,0,0),c(10,10,10))),
+             tuning=list("phi"=0.5, "sigma.sq"=0.5, "beta"= beta.tuning, "w" = 0.5), #for metropolis proposals. May need to adjust
+  amcmc=list("n.batch"=n.batch, "batch.length"=batch.length, "accept.rate"=0.43),
+                 verbose=TRUE, n.report=10)
+```
+
