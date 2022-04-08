@@ -344,6 +344,15 @@ m.jitter <- spGLM(data~Sable_geo_df_binary.LONGITUDE + Sable_geo_df_binary.LATIT
              tuning=list("phi"=0.5, "sigma.sq"=0.5, "beta"= beta.tuning_j, "w" = 0.5), #for metropolis proposals. May need to adjust
   amcmc=list("n.batch"=n.batch2, "batch.length"=batch.length2, "accept.rate"=0.43),
                  verbose=TRUE, n.report=10)
+
+#save(m.jitter, file="jittered_model.R")
+#save(m.jitter, "jitter_model.rds")
+```
+ 
+ save the damn model object, and output
+```{r}
+#saveRDS(m.jitter, file="jittered_mod.rds")
+#mod<- readRDS("jittered_mod.RDS") #seems to work for loading the model
 ```
  
  Seems to be working now -> 04/08/22
