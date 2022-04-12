@@ -644,4 +644,12 @@ m.jitter.2 <- spGLM(data~Sable_geo_df_binary.LONGITUDE + Sable_geo_df_binary.LAT
  
 ```
 
+Nice! It ran! Took less than 10 mintues, too!!
+```{r}
+
+saveRDS(m.jitter.2, file="jittered_mod_2.rds")
+```
+
+
+
 Ask Margaret: If WLS fits empirical variogram, or if I should use ML or REML
