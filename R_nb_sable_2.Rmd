@@ -347,6 +347,41 @@ m.jitter <- spGLM(data~Sable_geo_df_binary.LONGITUDE + Sable_geo_df_binary.LATIT
 
 #save(m.jitter, file="jittered_model.R")
 #save(m.jitter, "jitter_model.rds")
+
+#asked about n.batch during office hours 4/11
+##Is it necessary?
+###LEAVE THIS OUT NEXT TIME--> see if that works
+###AMCMC is to make less burn in
+
+#to make more samples
+##blocks larger
+##batch length is 50, do 200 times, 
+
+
+#try next time: n.samples larger, without amcmc option, see if that runs.
+##test with 1000, go with 5000 or larger for the final run. (it depends. If the chains look sketchy, go longer)
+##unless getting ot 1000 looks forever, than go with 1000.
+##also try: adding interaction effects.
+##add 2nd degree model to future work section
+
+
+#For writing:
+#abstract
+#background
+#methods - stats!! -  Emphasis here!!
+##what algorithms are they using here? in spGLM
+##predictive process - 
+##something about w's -> not tao^2/sigma^2
+##w's are distant cousins of knot values. 
+### w is a list of numbers. The w I have above is incorrect.
+####just get it to work first, worry about specifics later
+#### for the starting value: tell it one number, and mcmc will figure it out. Don't worry about it unless the trace plots are bad
+##### get trace plots of these w's 
+##### get info on w's ->> kind of related (like a cousin) to knot values
+#results
+#discussion
+#conlusions/fiture work
+#bib
 ```
  
  save the damn model object, and output
@@ -535,8 +570,43 @@ This code took over an hour to run. I saved the output as jitter_model.rds. I'm 
 
 I have it saved as m.jitter in the environment right now. How to check out the parameter graphs?
 What lecture number was this?
+-see page 122 and 123
 ```{r}
 library(spBayes)
-plot(m.jitter)
+#post
+theta_p <- m.jitter$p.beta.theta.samples #how to separate these thetas?
+names(m.jitter)
+names(theta_p)
+summary(theta_p)
+plot(theta_p) #IT WORKS!!
+summary(theta_p$'(Intercept)') #does not work
+class(theta_p)
+dim(theta_p)
+is.matrix(theta_p)
+summary(theta_p[,1]) #how to extract each part of this
+
+#set up the trace plots
+my_which <- seq(from=100, to=1150, by=10)
+my_theta_draws <- theta_p[my_which]
+
+
+#graph the trace plots
+#plot(my_theta_draws)
+
+##
+beta_0_hat <- theta_p[,1]
 ```
+
+
+coda package!
+Use the coda package to graph
+
+p. 122, top of page 124
+```{r}
+library(coda)
+plot(mcmc(cbind(my_theta_draws)))
+
+```
+
+
 
