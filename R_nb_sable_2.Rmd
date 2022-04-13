@@ -659,14 +659,14 @@ library(coda)
 names(m.jitter.2)
 p.beta.theta.samples <- m.jitter.2$p.beta.theta.samples
 plot(p.beta.theta.samples)
-plot(mcmc(cbind(p.beta.theta.samples))) #plotting it, looks terrible. Why?
+plot(mcmc(cbind(p.beta.theta.samples))) #plotting it, looks terrible. Why? This plot works, tho!
 
-int <-p.beta.theta.samples[,1]
+int <-p.beta.theta.samples[,1] #the intercept
 #plot(mcmc(int)) #plotting a terrible, not grassy plot. Why?
 
 
 #smaller: 
-my_which_2 <- seq(from=100, to=5000, by=10)
+my_which_2 <- seq(from=100, to=1000, by=10)
 my_theta_draws_2 <- p.beta.theta.samples[my_which_2]
 str(my_theta_draws_2)
 summary(my_theta_draws_2)
@@ -676,7 +676,21 @@ my_int <- int[my_which_2]
 plot(int)
 int$statistics
 
+plot(mcmc(cbind(int)))
 
+
+#ok, we figured out intercept, now plot the other traceplots
+beta1 <- p.beta.theta.samples[,2]
+beta2 <- p.beta.theta.samples[,3]
+beta3 <- p.beta.theta.samples[,4]
+
+my_beta0 <- my_int
+my_beta1 <- beta1[my_which_2]
+my_beta2 <- beta2[my_which_2]
+my_beta3 <- beta3[my_which_2]
+
+plot(mcmc(cbind(my_beta0, my_beta1, my_beta2, my_beta3))) #why not work??
+plot(my_beta2)
 
 
 
