@@ -647,8 +647,43 @@ m.jitter.2 <- spGLM(data~Sable_geo_df_binary.LONGITUDE + Sable_geo_df_binary.LAT
 Nice! It ran! Took less than 10 mintues, too!!
 ```{r}
 
-saveRDS(m.jitter.2, file="jittered_mod_2.rds")
+#saveRDS(m.jitter.2, file="jittered_mod_2.rds")
 ```
+
+I have my model, m.jitter.2 (load it from the jittered_mod_2.rds file if you can't find it)
+Let's check out them traceplots
+```{r}
+library(geoR)
+library(spBayes)
+library(coda)
+names(m.jitter.2)
+p.beta.theta.samples <- m.jitter.2$p.beta.theta.samples
+plot(p.beta.theta.samples)
+plot(mcmc(cbind(p.beta.theta.samples))) #plotting it, looks terrible. Why?
+
+int <-p.beta.theta.samples[,1]
+#plot(mcmc(int)) #plotting a terrible, not grassy plot. Why?
+
+
+#smaller: 
+my_which_2 <- seq(from=100, to=5000, by=10)
+my_theta_draws_2 <- p.beta.theta.samples[my_which_2]
+str(my_theta_draws_2)
+summary(my_theta_draws_2)
+
+names(int)
+my_int <- int[my_which_2]
+plot(int)
+int$statistics
+
+
+
+
+
+```
+
+
+Why do my traceplots look terrible
 
 
 
