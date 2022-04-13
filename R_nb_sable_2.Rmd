@@ -689,7 +689,7 @@ my_beta1 <- beta1[my_which_2]
 my_beta2 <- beta2[my_which_2]
 my_beta3 <- beta3[my_which_2]
 
-plot(mcmc(cbind(my_beta0, my_beta1, my_beta2, my_beta3))) #why not work??
+plot(mcmc(cbind(my_beta0, my_beta1, my_beta2, my_beta3)), smooth=F, density=F) #why not work??
 plot(my_beta2)
 
 
@@ -698,7 +698,38 @@ plot(my_beta2)
 
 
 Why do my traceplots look terrible
+Traceplots better
+```{r}
+ #plot(mcmc(t(m.1$acceptance)), density=FALSE, smooth=FALSE)
+ plot(mcmc(t(m.jitter.2$acceptance)), density=FALSE, smooth=FALSE)
+```
 
 
+04/13/22
+Terrible traceplots. They wander. Why?
+--> try using a WIDER metropolis proposal
+--> try increasing RANGE of allowable parameters? Is this a thing?
+-->consider using depth as a covariate
+---> consider more iterations (5000)
+
+Widening the metropolis proposal. This will be the same dataset(jittered), same spGLM code, with wider metropolis proposals
+```{r}
+library(geoR)
+library(ggplot2)
+library(coda)
+library(spBayes)
+m.jitter.3 <- spGLM(data~Sable_geo_df_binary.LONGITUDE + Sable_geo_df_binary.LATITUDE + Sable_geo_df_binary.LONGITUDE:Sable_geo_df_binary.LATITUDE, family="binomial", coords=Sable_coord_binary_jitter_gdf$coords, data=Sable_coord_binary_jitter_gdf, n.samples = 5000, cov.model="exponential", #inc iterations from 1000 to 5000
+             starting=list("phi"=sable_WLS_phi_j,"sigma.sq"=sable_WLS_sigsq_j, "beta"=beta.starting_j_3, 
+                           "w"= 0), #using 0, like in the example, because this w is NOT omega
+             priors=list("phi.Unif"=c(1, 2), "sigma.sq.IG"=c(2,1),                                                                                                         "beta.Normal"=list(c(0,0,0,0),c(10,10,10,10))),
+             tuning=list("phi"=0.8, "sigma.sq"=0.8, "beta"= beta.tuning_j_3, "w" = 0.8))
+#changed tuning from 0.5 to 0.8 but kept the same beta (widens metropolis proposal?)
+#I increased iterations from 1000 to 5000
+```
+
+Let's save this model, it took a while to run
+```{r}
+saveRDS(m.jitter.3, "m_jitter_3.rds")
+```
 
 Ask Margaret: If WLS fits empirical variogram, or if I should use ML or REML
