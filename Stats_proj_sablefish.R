@@ -129,4 +129,16 @@ Sable_geo$coords[,1] <- lons
 plot(Sable_geo)
 
 
+#messing with my plot 04/14/22
+dev.off()
+#par(mar = c(15, 15, 15, 2.75))
+par(mar = c(2, 2, 10, 2))
+plot(Sable_geo) #NEEED HELP WITH aDDING TO MARGIN
+
+#giving up and ggploting my plot
+Sable_df <- data.frame(Sable_geo)
+library(ggplot2)
+library(viridis)
+ggplot(Sable_df) + aes(x=LONGITUDE, y=LATITUDE, color=data) +
+  geom_point() + scale_color_viridis()
 

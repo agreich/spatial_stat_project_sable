@@ -732,4 +732,25 @@ Let's save this model, it took a while to run
 saveRDS(m.jitter.3, "m_jitter_3.rds")
 ```
 
+Let's look at them traceplots
+```{r}
+p.beta.theta.samples.3 <- m.jitter.3$p.beta.theta.samples
+
+beta0 <- p.beta.theta.samples.3[,2]
+beta1 <- p.beta.theta.samples.3[,2]
+beta2 <- p.beta.theta.samples.3[,3]
+beta3 <- p.beta.theta.samples.3[,4]
+
+my_which_3 <- seq(from=100, to=5000, by=100)
+
+my_beta0 <- beta0[my_which_3]
+my_beta1 <- beta1[my_which_3]
+my_beta2 <- beta2[my_which_3]
+my_beta3 <- beta3[my_which_3]
+
+plot(mcmc(cbind(my_beta0, my_beta1, my_beta2, my_beta3)), smooth=F, density=F) 
+plot(p.beta.theta.samples.3, smooth=F)
+```
+
+
 Ask Margaret: If WLS fits empirical variogram, or if I should use ML or REML
