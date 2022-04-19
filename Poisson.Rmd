@@ -1,0 +1,176 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Maybe try Poisson?
+
+Need the original dataset... not 0's and 1's
+```{r}
+####R script exploration####
+
+#import the data
+Groundfish <- read.csv("ai2014_2018.csv")
+names(Groundfish)
+
+#load some packages
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(dplyr)
+
+#filter some data
+unique(Groundfish$COMMON)
+Sablefish <- Groundfish %>% filter(COMMON == "sablefish")
+names(Sablefish)
+#I'm interested in NUMCPUE as my covariate
+
+#let's load that geostatistical package we used for scallops
+##and use that to make a geodataframe
+##and plot just like we did for scallops, with the covariate as sablefish number
+??as.geodata
+library(geoR)
+##seems to have loaded, got some weird warnings tho
+data("Ksat") #just looking at this data structure
+
+
+#the challenge of creating a geodata object so I can plot it
+length(Sablefish$LATITUDE)
+names(Sablefish)
+Sablefish_relevant <- Sablefish[c(2,1,8)] #got the relevant data frame here
+###you may want to add more
+#Sable.matrix <- as.matrix(data=c(Sablefish$LONGITUDE, Sablefish$LATITUDE, ),nrow=162)
+#make a matric
+Sable_matrix <- as.matrix(Sablefish_relevant) #that worked!!
+Sable_geo <- as.geodata(Sable_matrix) #now create the geodata object
+
+##WARNING!! I pulled out all examples of sablefish. There are surveys with 0 sablefish that I did not
+##acknoledge at this point. Those 0's are probably important
+
+
+##which surveys do we have?
+names(Sablefish)
+Sablefish_survey_df <- Sablefish[c(16,17)]
+Sablefish
+#surveys total
+Groundfish$HAUL
+
+
+#unite
+SableID1 <- unite(Sablefish_survey_df, ID_new, CRUISE:HAUL)
+names(Sablefish_survey_df)
+head(Sablefish_survey_df)
+
+Groundfish_survey_ID <- Groundfish[c(16,17)]
+
+GroundID1<- unite(data=Groundfish_survey_ID, col=ID_new, CRUISE:HAUL)
+
+GroundID <-as.factor(GroundID1$ID_new)
+SableID <- as.factor(SableID1$ID_new)
+nosable <- unique(setdiff(GroundID, SableID))
+length(unique(GroundID))
+length(nosable)
+length(unique(SableID)) #not the same as sable ID. I do not know why
+
+
+#seemed to work. not let's find the coords for nosable
+Groundfish$ID_new <- GroundID #a factor
+names(Groundfish)
+head(Groundfish)
+#does intersect work here
+#nosable.df <- Groundfish %>% intersect(GroundID, nosable)
+nosable.df <- nosable %in% Groundfish$ID_new #HELP
+
+Groundfish_locations_nosable <- Groundfish %>% filter(ID_new %in% c(nosable))
+#THANK YOU MATT!!
+names(Groundfish_locations_nosable)
+Groundfish_locations_nosable_coords <- unique(Groundfish_locations_nosable[c(2,1,18)])
+Groundfish_locations_nosable_coords2 <- unique(Groundfish_locations_nosable[c(2,1)])
+length(Groundfish$LATITUDE)
+length(Groundfish_locations_nosable_coords$LATITUDE)
+length(unique(Groundfish_locations_nosable_coords$ID_new))
+length(Groundfish_locations_nosable_coords2$LATITUDE)
+
+head(Groundfish_locations_nosable_coords)
+names(Groundfish_locations_nosable_coords)
+head(Sable_matrix)
+Groundfish_locations_nosable_coords$NUMCPUE <- rep(0, 993)
+Nosable_matrix_prep <- Groundfish_locations_nosable_coords[-3]
+
+#so theres 162 sablefish hauls and
+##993 hauls without sablefish if we use the Groundfish_locations_nosable_coords dataset
+##let's combine the dataframe so that we have sablefish coords and our zeros!!
+
+head(Sable_matrix)
+Sable_0_matrix <- as.matrix(Nosable_matrix_prep)
+#Sable_matrix[,1] <- abs(Sable_matrix[,1]) #this was not the right step
+#Sable_0_matrix[,1] <- abs(Sable_0_matrix[,1] ) #tis was not the right step
+
+Sable_matrix_combined <- rbind(Sable_matrix, Sable_0_matrix)
+
+Sable_geo_P <- as.geodata(Sable_matrix_combined)
+Sable_geo_P
+plot(Sable_geo_P)
+
+lons <- Sable_geo_P$coords[,1]
+lons <- ifelse(lons<0, lons+180, lons-180)
+Sable_geo_P$coords[,1] <- lons
+plot(Sable_geo_P) #the poisson geodataframe is set up
+```
+
+Step1: jitter coords fir Sable_geo_P
+```{r}
+names(Sable_geo_P)
+coord.df.P <-data.frame(Sable_geo_P$coords[,1], Sable_geo_P$coords[,2])
+Sable_coord_jitter.P <- jitterDupCoords(coord.df.P, max=0.01)
+
+Sable_coord_jitter.P$data <- Sable_geo_P$data
+
+Sable_coord_P_jitter_gdf <- as.geodata(Sable_coord_jitter.P)
+dup.coords(Sable_coord_P_jitter_gdf)
+```
+
+Step2: Fit an empirical semivariogram and a WLS semivriogram to get param ests.
+
+```{r}
+boxwid <- 1
+
+my_grid <- pred_grid(  
+  c(-10, 15),
+  c(50, 55),
+  by=boxwid
+) #These are the same as the grid before
+
+
+
+dim(my_grid)
+
+my_variog_sable_jitter_P<- variog(Sable_coord_P_jitter_gdf, trend="1st") 
+#my_variog_sable_2<- variog(Sable_geo_binary, trend="2nd") 
+
+plot(my_variog_sable_jitter_P)
+#plot(my_variog_sable_2)
+#
+#both look weird
+##gonna roll with trend=1st for now.
+
+##Variofit for the WLS estimate
+my_WLS_sable_jitter_P <- variofit(my_variog_sable_jitter_P,
+                        ini.cov.pars = c(100, 7), #sill, then range estimates
+                        cov.model="exponential",
+                        fix.nugget=F,
+                        max.dist = 300 #plot gets weird after 300
+                        )
+
+##plot it over your variog
+plot(my_variog_sable_jitter_P)
+lines(my_WLS_sable_jitter_P) #looks like a good fit to me.
+
+names(my_WLS_sable_jitter)
+sable.cov.pars_j <- my_WLS_sable_jitter$cov.pars #sigsq, then phi
+sable_WLS_sigsq_j <- sable.cov.pars_j[1]
+sable_WLS_phi_j <- sable.cov.pars_j[2]
+sable_WLS_tao_sq_j <- my_WLS_sable_jitter$nugget
+sable_WLS_w_j <- sable_WLS_tao_sq_j/sable_WLS_sigsq_j
+```
+

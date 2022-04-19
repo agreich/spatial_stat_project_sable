@@ -314,6 +314,29 @@ sable_WLS_tao_sq_j <- my_WLS_sable_jitter$nugget
 sable_WLS_w_j <- sable_WLS_tao_sq_j/sable_WLS_sigsq_j
 ```
 
+2.5 Let's get some MLE and REML estimates
+```{r}
+my_ML_fit_j <- likfit(Sable_coord_binary_jitter_gdf,
+                      trend="1st",
+                    ini.cov.pars= c(sable_WLS_sigsq_j, sable_WLS_phi_j),
+                   fix.nugget = F,
+                 nugget = sable_WLS_tao_sq_j,
+                lik.method="ML"
+)
+my_REML_fit_j <- likfit(Sable_coord_binary_jitter_gdf,
+                    trend="1st",
+                    ini.cov.pars= c(sable_WLS_sigsq_j, sable_WLS_phi_j),
+                    fix.nugget = F,
+                    nugget = sable_WLS_tao_sq_j,
+                    lik.method="REML")
+
+plot(my_variog_sable_jitter)
+lines(my_WLS_sable_jitter) #this one is fine
+lines(my_ML_fit_j, col=2) 
+lines(my_REML_fit_j, col=3)
+```
+
+
  3- logistic regression, for beta values (GLM)
 ```{r}
 #using gdf: Sable_coord_binary_jitter_gdf
