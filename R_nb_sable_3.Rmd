@@ -115,10 +115,77 @@ m.jitter.5 <- spGLM(data~Sable_geo_df_binary.LONGITUDE + Sable_geo_df_binary.LAT
              starting=list("phi"=sable_WLS_phi_j,"sigma.sq"=sable_WLS_sigsq_j, "beta"=beta.starting_j_3, 
                            "w"= 0), #using 0, like in the example, because this w is NOT omega
              priors=list("phi.Unif"=c(1, 2), "sigma.sq.IG"=c(2,1),                                                                                                     "beta.Normal"=list(c(0,0,0,0),c(1000,1000,1000,1000))), #gonna want to make these 1000...
-             tuning=list("phi"=0.05, "sigma.sq"=0.05, "beta"= beta.tuning_j_3, "w" = 0.05)) #made tuning EVEN lower to see what happens
+             tuning=list("phi"=0.005, "sigma.sq"=0.005, "beta"= beta.tuning_j_3, "w" = 0.005)) #made tuning EVEN lower to see what happens
+saveRDS(m.jitter.5, "m_jitter_5.rds")
 
+#these dont have to be the same. We can make one of them smaller
+```
+
+Acceptance is still not high enough
+```{r}
+m.jitter.5$acceptance
+```
+
+Even smaller tuning! If this doesnt work, change beta.tuning_j_3
+...."nu" is an option. What is nu?
+```{r}
+m.jitter.6 <- spGLM(data~Sable_geo_df_binary.LONGITUDE + Sable_geo_df_binary.LATITUDE + Sable_geo_df_binary.LONGITUDE:Sable_geo_df_binary.LATITUDE, family="binomial", coords=Sable_coord_binary_jitter_gdf$coords, data=Sable_coord_binary_jitter_gdf, n.samples = 1000, cov.model="exponential", #change to 5000 eventually
+             starting=list("phi"=sable_WLS_phi_j,"sigma.sq"=sable_WLS_sigsq_j, "beta"=beta.starting_j_3, 
+                           "w"= 0), #using 0, like in the example, because this w is NOT omega
+             priors=list("phi.Unif"=c(1, 2), "sigma.sq.IG"=c(2,1),                                                                                                     "beta.Normal"=list(c(0,0,0,0),c(1000,1000,1000,1000))), #gonna want to make these 1000...
+             tuning=list("phi"=0.005, "sigma.sq"=0.005, "beta"= beta.tuning_j_3, "w" = 0.005)) #made tuning EVEN lower to see what happens
+saveRDS(m.jitter.6, "m_jitter_6.rds")
 ```
 
 
+Ok so m.jitter.5 looks better than m.jitter.6. But I don't know why.
+```{r}
+m.jitter.5$acceptance
+m.jitter.6$acceptance
+
+print(summary(window(m.jitter.5$p.beta.theta.samples)))
+
+plot(mcmc(m.jitter.5$p.beta.theta.samples))
+
+
+plot(mcmc(m.jitter.6$p.beta.theta.samples))
+
+library(ggplot2)
+class(Sable_coord_binary_jitter_gdf)
+Test.df <- data.frame(Sable_coord_binary_jitter_gdf)
+names(Test.df)
+ggplot(Test.df) + aes(x=Sable_geo_df_binary.LONGITUDE, y=Sable_geo_df_binary.LATITUDE) + geom_point()
+
+plot(m.jitter.5$p.beta.theta.samples[,2], m.jitter.5$p.beta.theta.samples[,3])
+scatterplot(m.jitter.5$p.beta.theta.samples[,2], m.jitter.5$p.beta.theta.samples[,3])
+ggplot() + aes(m.jitter.5$p.beta.theta.samples[,2], m.jitter.5$p.beta.theta.samples[,3]) + geom_point()
+length(unique(m.jitter.5$p.beta.theta.samples[,2]))
+```
+
+In this iteration:
+Change sigsq and phi
+and their tuning
+```{r}
+m.jitter.7 <- spGLM(data~Sable_geo_df_binary.LONGITUDE + Sable_geo_df_binary.LATITUDE + Sable_geo_df_binary.LONGITUDE:Sable_geo_df_binary.LATITUDE, family="binomial", coords=Sable_coord_binary_jitter_gdf$coords, data=Sable_coord_binary_jitter_gdf, n.samples = 1000, cov.model="exponential", #change to 5000 eventually
+             starting=list("phi"=1.3,"sigma.sq"=300, "beta"=beta.starting_j_3, 
+                           "w"= 0), #using 0, like in the example, because this w is NOT omega
+             priors=list("phi.Unif"=c(1, 2), "sigma.sq.IG"=c(2,1),                                                                                                     "beta.Normal"=list(c(0,0,0,0),c(1000,1000,1000,1000))), #gonna want to make these 1000...
+             tuning=list("phi"=0.0025, "sigma.sq"=0.0025, "beta"= beta.tuning_j_3, "w" = 0.005)) #made tuning EVEN lower to see what happens
+saveRDS(m.jitter.7, "m_jitter_7.rds")
+```
+
+
+
+Suggestion:
+make a new dataset with a centered lat... (probably not the problem)
+Make a new dataset with centered longitdues, -1 to pos 1. Lat will go from -1 to pos 1.
+--> center lat. Divide so it ranges from -1 to pos 1 or -2 to pos 2
+Make new lat variable = (lat#-mean of all lat)/sd of lat. DO this for long as well!!!! DO THIS!!
+--> new numbers for the tuning proposals for these two betas.
+--> maybe I shouldnt use the same tuning proposals for lat and long
+---> try to get relative size of tuning proposals to be the same. This is why we're trying this
+---> 
+
 Question:
 Is my WLS exponsential varigram a good-enough fit?
+How to include
