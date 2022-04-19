@@ -63,7 +63,11 @@ plot the models that ran: m3
 ```{r}
 p.beta.theta.samples.3 <- m.jitter.3$p.beta.theta.samples
 
-beta0_3 <- p.beta.theta.samples.3[,2]
+names(m.jitter.3)
+m.jitter.2$acceptance # dont understand why this one is higher....
+m.jitter.3$acceptance # small acceptance
+
+beta0_3 <- p.beta.theta.samples.3[,1]
 beta1_3 <- p.beta.theta.samples.3[,2]
 beta2_3 <- p.beta.theta.samples.3[,3]
 beta3_3 <- p.beta.theta.samples.3[,4]
@@ -83,18 +87,36 @@ plot(p.beta.theta.samples.3, smooth=F)
 
 How to improve the next model version?
 Need a wider metropolis proposal. How to do that here? Tuning?
+I'll try setting larger tuning values for this one?
+Maybe increase the variance? It's 10 right now. Consider increasing to 1000.
 ```{r}
 library(geoR)
 library(ggplot2)
 library(coda)
 library(spBayes)
-m.jitter.3 <- spGLM(data~Sable_geo_df_binary.LONGITUDE + Sable_geo_df_binary.LATITUDE + Sable_geo_df_binary.LONGITUDE:Sable_geo_df_binary.LATITUDE, family="binomial", coords=Sable_coord_binary_jitter_gdf$coords, data=Sable_coord_binary_jitter_gdf, n.samples = 1000, cov.model="exponential", #inc iterations from 1000
+m.jitter.4 <- spGLM(data~Sable_geo_df_binary.LONGITUDE + Sable_geo_df_binary.LATITUDE + Sable_geo_df_binary.LONGITUDE:Sable_geo_df_binary.LATITUDE, family="binomial", coords=Sable_coord_binary_jitter_gdf$coords, data=Sable_coord_binary_jitter_gdf, n.samples = 1000, cov.model="exponential", #inc iterations from 1000
              starting=list("phi"=sable_WLS_phi_j,"sigma.sq"=sable_WLS_sigsq_j, "beta"=beta.starting_j_3, 
                            "w"= 0), #using 0, like in the example, because this w is NOT omega
-             priors=list("phi.Unif"=c(1, 2), "sigma.sq.IG"=c(2,1),                                                                                                         "beta.Normal"=list(c(0,0,0,0),c(10,10,10,10))),
-             tuning=list("phi"=0.8, "sigma.sq"=0.8, "beta"= beta.tuning_j_3, "w" = 0.8))
-#changed tuning from 0.5 to 0.8 but kept the same beta (widens metropolis proposal?)
-#I increased iterations from 1000 to 5000
+             priors=list("phi.Unif"=c(1, 2), "sigma.sq.IG"=c(2,1),                                                                                                         "beta.Normal"=list(c(0,0,0,0),c(10,10,10,10))), #gonna want to make these 1000...
+             tuning=list("phi"=0.2, "sigma.sq"=0.2, "beta"= beta.tuning_j_3, "w" = 0.2)) #made tuning lower to see waht happens
+
+##have the output tell me: what are the accep
+m.jitter.4$acceptance #2.3 way too small
+m.jitter.3$acceptance
+
+```
+
+m.jitter.5
+Lowering the tuning even more!!
+And raise the variance of the priors
+(when I use family=binomial, am I assuming a normal distribution (stupid question...))
+```{r}
+m.jitter.5 <- spGLM(data~Sable_geo_df_binary.LONGITUDE + Sable_geo_df_binary.LATITUDE + Sable_geo_df_binary.LONGITUDE:Sable_geo_df_binary.LATITUDE, family="binomial", coords=Sable_coord_binary_jitter_gdf$coords, data=Sable_coord_binary_jitter_gdf, n.samples = 1000, cov.model="exponential", #change to 5000 eventually
+             starting=list("phi"=sable_WLS_phi_j,"sigma.sq"=sable_WLS_sigsq_j, "beta"=beta.starting_j_3, 
+                           "w"= 0), #using 0, like in the example, because this w is NOT omega
+             priors=list("phi.Unif"=c(1, 2), "sigma.sq.IG"=c(2,1),                                                                                                     "beta.Normal"=list(c(0,0,0,0),c(1000,1000,1000,1000))), #gonna want to make these 1000...
+             tuning=list("phi"=0.05, "sigma.sq"=0.05, "beta"= beta.tuning_j_3, "w" = 0.05)) #made tuning EVEN lower to see what happens
+
 ```
 
 
