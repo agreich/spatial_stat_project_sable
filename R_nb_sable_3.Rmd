@@ -165,15 +165,64 @@ length(unique(m.jitter.5$p.beta.theta.samples[,2]))
 In this iteration:
 Change sigsq and phi
 and their tuning
+changed phi uniform start and variance. Maybe reduce pri.unif variance a bit
 ```{r}
 m.jitter.7 <- spGLM(data~Sable_geo_df_binary.LONGITUDE + Sable_geo_df_binary.LATITUDE + Sable_geo_df_binary.LONGITUDE:Sable_geo_df_binary.LATITUDE, family="binomial", coords=Sable_coord_binary_jitter_gdf$coords, data=Sable_coord_binary_jitter_gdf, n.samples = 1000, cov.model="exponential", #change to 5000 eventually
              starting=list("phi"=1.3,"sigma.sq"=300, "beta"=beta.starting_j_3, 
                            "w"= 0), #using 0, like in the example, because this w is NOT omega
-             priors=list("phi.Unif"=c(1, 2), "sigma.sq.IG"=c(2,1),                                                                                                     "beta.Normal"=list(c(0,0,0,0),c(1000,1000,1000,1000))), #gonna want to make these 1000...
-             tuning=list("phi"=0.0025, "sigma.sq"=0.0025, "beta"= beta.tuning_j_3, "w" = 0.005)) #made tuning EVEN lower to see what happens
+             priors=list("phi.Unif"=c(0.03, 2), "sigma.sq.IG"=c(2,1),                                                                                                     "beta.Normal"=list(c(0,0,0,0),c(1000,1000,1000,1000))), #gonna want to make these 1000...
+             tuning=list("phi"=0.0025, "sigma.sq"=0.0025, "beta"= beta.tuning_j_3, "w" = 0.005)) #
 saveRDS(m.jitter.7, "m_jitter_7.rds")
 ```
 
+
+
+```{r}
+plot(mcmc(m.jitter.7$p.beta.theta.samples))
+```
+```{r}
+m.jitter.8 <- spGLM(data~Sable_geo_df_binary.LONGITUDE + Sable_geo_df_binary.LATITUDE + Sable_geo_df_binary.LONGITUDE:Sable_geo_df_binary.LATITUDE, family="binomial", coords=Sable_coord_binary_jitter_gdf$coords, data=Sable_coord_binary_jitter_gdf, n.samples = 1000, cov.model="exponential", #change to 5000 eventually
+             starting=list("phi"=0.9,"sigma.sq"=50, "beta"=beta.starting_j_3, 
+                           "w"= 0), #using 0, like in the example, because this w is NOT omega
+             priors=list("phi.Unif"=c(0.03, 2), "sigma.sq.IG"=c(2,1),                                                                                                     "beta.Normal"=list(c(0,0,0,0),c(1000,1000,1000,1000))), #gonna want to make these 1000...
+             tuning=list("phi"=0.001, "sigma.sq"=0.001, "beta"= beta.tuning_j_3, "w" = 0.0025)) #
+saveRDS(m.jitter.8, "m_jitter_8.rds")
+```
+
+```{r}
+plot(mcmc(m.jitter.8$p.beta.theta.samples))
+```
+```{r}
+m.jitter.9 <- spGLM(data~Sable_geo_df_binary.LONGITUDE + Sable_geo_df_binary.LATITUDE + Sable_geo_df_binary.LONGITUDE:Sable_geo_df_binary.LATITUDE, family="binomial", coords=Sable_coord_binary_jitter_gdf$coords, data=Sable_coord_binary_jitter_gdf, n.samples = 1000, cov.model="exponential", #change to 5000 eventually
+             starting=list("phi"=0.9,"sigma.sq"=15, "beta"=beta.starting_j_3, 
+                           "w"= 0), #using 0, like in the example, because this w is NOT omega
+             priors=list("phi.Unif"=c(0.03, 1), "sigma.sq.IG"=c(2,1),                                                                                                     "beta.Normal"=list(c(0,0,0,0),c(1000,1000,1000,1000))), #gonna want to make these 1000...
+             tuning=list("phi"=0.0005, "sigma.sq"=0.0005, "beta"= beta.tuning_j_3, "w" = 0.001)) #
+saveRDS(m.jitter.9, "m_jitter_9.rds")
+```
+
+
+
+```{r}
+plot(mcmc(m.jitter.9$p.beta.theta.samples))
+```
+
+```{r}
+
+
+m.jitter.10 <- spGLM(data~Sable_geo_df_binary.LONGITUDE + Sable_geo_df_binary.LATITUDE + Sable_geo_df_binary.LONGITUDE:Sable_geo_df_binary.LATITUDE, family="binomial", coords=Sable_coord_binary_jitter_gdf$coords, data=Sable_coord_binary_jitter_gdf, n.samples = 1000, cov.model="exponential", #change to 5000 eventually
+             starting=list("phi"=0.9,"sigma.sq"=sable_WLS_sigsq_j, "beta"=beta.starting_j_3, 
+                           "w"= 0), #using 0, like in the example, because this w is NOT omega
+             priors=list("phi.Unif"=c(0.03, 1), "sigma.sq.IG"=c(2,1),                                                                                                     "beta.Normal"=list(c(0,0,0,0),c(1000,1000,1000,1000))), #gonna want to make these 1000...
+             tuning=list("phi"=0.05, "sigma.sq"=0.05, "beta"= beta.tuning_j_3, "w" = 0.05)) #
+#saveRDS(m.jitter.10, "m_jitter_10.rds")
+
+```
+
+
+```{r}
+plot(mcmc(m.jitter.10$p.beta.theta.samples))
+```
 
 
 Suggestion:
@@ -184,7 +233,7 @@ Make new lat variable = (lat#-mean of all lat)/sd of lat. DO this for long as we
 --> new numbers for the tuning proposals for these two betas.
 --> maybe I shouldnt use the same tuning proposals for lat and long
 ---> try to get relative size of tuning proposals to be the same. This is why we're trying this
----> 
+---> DONT DO THiS, nevermind
 
 Question:
 Is my WLS exponsential varigram a good-enough fit?
