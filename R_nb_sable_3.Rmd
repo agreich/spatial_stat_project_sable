@@ -207,23 +207,30 @@ saveRDS(m.jitter.9, "m_jitter_9.rds")
 plot(mcmc(m.jitter.9$p.beta.theta.samples))
 ```
 
+Alternative phi:0.9
 ```{r}
 
 
 m.jitter.10 <- spGLM(data~Sable_geo_df_binary.LONGITUDE + Sable_geo_df_binary.LATITUDE + Sable_geo_df_binary.LONGITUDE:Sable_geo_df_binary.LATITUDE, family="binomial", coords=Sable_coord_binary_jitter_gdf$coords, data=Sable_coord_binary_jitter_gdf, n.samples = 1000, cov.model="exponential", #change to 5000 eventually
-             starting=list("phi"=0.9,"sigma.sq"=sable_WLS_sigsq_j, "beta"=beta.starting_j_3, 
+             starting=list("phi"=sable_WLS_phi_j,"sigma.sq"=sable_WLS_sigsq_j, "beta"=beta.starting_j_3, 
                            "w"= 0), #using 0, like in the example, because this w is NOT omega
-             priors=list("phi.Unif"=c(0.03, 1), "sigma.sq.IG"=c(2,1),                                                                                                     "beta.Normal"=list(c(0,0,0,0),c(1000,1000,1000,1000))), #gonna want to make these 1000...
-             tuning=list("phi"=0.05, "sigma.sq"=0.05, "beta"= beta.tuning_j_3, "w" = 0.05)) #
-#saveRDS(m.jitter.10, "m_jitter_10.rds")
+             priors=list("phi.Unif"=c(0.48, 2.48), "sigma.sq.IG"=c(2,1),                                                                                                     "beta.Normal"=list(c(0,0,0,0),c(1000,1000,1000,1000))), #gonna want to make these 1000...
+             tuning=list("phi"=0.05, "sigma.sq"=0.05, "beta"= beta.tuning_j_3, "w" = 0.05)) 
+
+#
+saveRDS(m.jitter.10, "m_jitter_10.rds")
 
 ```
 
 
 ```{r}
 plot(mcmc(m.jitter.10$p.beta.theta.samples))
+#ok....soemthing worked. Seemed to respond to the changing phi uniform dist. Try doing this same thing but...longer??
 ```
+vertion 10 but 5000 times!
+```{r}
 
+```
 
 Suggestion:
 make a new dataset with a centered lat... (probably not the problem)
