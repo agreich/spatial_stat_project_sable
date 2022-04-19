@@ -754,3 +754,10 @@ plot(p.beta.theta.samples.3, smooth=F)
 
 
 Ask Margaret: If WLS fits empirical variogram, or if I should use ML or REML
+
+Saved the dataframe that I've been using
+```{r}
+#write.csv(Sable_coord_binary_jitter_gdf, "Sable_coord_binary_jitter_gdf.csv")
+```
+
+

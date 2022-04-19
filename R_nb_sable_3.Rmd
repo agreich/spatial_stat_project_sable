@@ -1,0 +1,102 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Bulding off of R_nb_sable_2 ( and Stats_proj_sablefish.R)
+04/28/22
+
+
+Load in models that ran
+```{r}
+m1<- readRDS("jittered_mod.rds") # It ran but I didnt know what I was doing.
+m2 <- readRDS("jittered_mod_2.rds") #1000 iterations
+m3 <-readRDS("m_jitter_3.rds") #5000 iterations
+
+m.jitter.3<- m3
+```
+
+plot the models that ran: m2
+
+```{r}
+m.jitter.2 <- m2
+
+p.beta.theta.samples <- m.jitter.2$p.beta.theta.samples
+plot(p.beta.theta.samples)
+plot(mcmc(cbind(p.beta.theta.samples))) #plotting it, looks terrible. Why? This plot works, tho!
+
+int <-p.beta.theta.samples[,1] #the intercept
+#plot(mcmc(int)) #plotting a terrible, not grassy plot. Why?
+
+
+#smaller: 
+my_which_2 <- seq(from=100, to=1000, by=10)
+my_theta_draws_2 <- p.beta.theta.samples[my_which_2]
+str(my_theta_draws_2)
+summary(my_theta_draws_2)
+
+names(int)
+my_int <- int[my_which_2]
+plot(int)
+#int$statistics
+
+plot(mcmc(cbind(int)))
+
+
+#ok, we figured out intercept, now plot the other traceplots
+beta1 <- p.beta.theta.samples[,2]
+beta2 <- p.beta.theta.samples[,3]
+beta3 <- p.beta.theta.samples[,4]
+
+my_beta0 <- my_int
+my_beta1 <- beta1[my_which_2]
+my_beta2 <- beta2[my_which_2]
+my_beta3 <- beta3[my_which_2]
+
+plot(mcmc(cbind(my_beta0, my_beta1, my_beta2, my_beta3)), smooth=F, density=F) #floor on B0, ceiling on B1, ceiling on B2, ceiling on B3
+plot(my_beta2)
+
+```
+
+
+plot the models that ran: m3
+```{r}
+p.beta.theta.samples.3 <- m.jitter.3$p.beta.theta.samples
+
+beta0_3 <- p.beta.theta.samples.3[,2]
+beta1_3 <- p.beta.theta.samples.3[,2]
+beta2_3 <- p.beta.theta.samples.3[,3]
+beta3_3 <- p.beta.theta.samples.3[,4]
+
+my_which_3 <- seq(from=100, to=5000, by=100)
+
+my_beta0_3 <- beta0_3[my_which_3]
+my_beta1_3 <- beta1_3[my_which_3]
+my_beta2_3 <- beta2_3[my_which_3]
+my_beta3_3 <- beta3_3[my_which_3]
+
+plot(mcmc(cbind(my_beta0_3, my_beta1_3, my_beta2_3, my_beta3_3)), smooth=F, density=F) 
+plot(p.beta.theta.samples.3, smooth=F)
+```
+
+
+
+How to improve the next model version?
+Need a wider metropolis proposal. How to do that here? Tuning?
+```{r}
+library(geoR)
+library(ggplot2)
+library(coda)
+library(spBayes)
+m.jitter.3 <- spGLM(data~Sable_geo_df_binary.LONGITUDE + Sable_geo_df_binary.LATITUDE + Sable_geo_df_binary.LONGITUDE:Sable_geo_df_binary.LATITUDE, family="binomial", coords=Sable_coord_binary_jitter_gdf$coords, data=Sable_coord_binary_jitter_gdf, n.samples = 1000, cov.model="exponential", #inc iterations from 1000
+             starting=list("phi"=sable_WLS_phi_j,"sigma.sq"=sable_WLS_sigsq_j, "beta"=beta.starting_j_3, 
+                           "w"= 0), #using 0, like in the example, because this w is NOT omega
+             priors=list("phi.Unif"=c(1, 2), "sigma.sq.IG"=c(2,1),                                                                                                         "beta.Normal"=list(c(0,0,0,0),c(10,10,10,10))),
+             tuning=list("phi"=0.8, "sigma.sq"=0.8, "beta"= beta.tuning_j_3, "w" = 0.8))
+#changed tuning from 0.5 to 0.8 but kept the same beta (widens metropolis proposal?)
+#I increased iterations from 1000 to 5000
+```
+
+
+Question:
+Is my WLS exponsential varigram a good-enough fit?
