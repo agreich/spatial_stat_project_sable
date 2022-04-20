@@ -133,6 +133,10 @@ dup.coords(Sable_coord_P_jitter_gdf)
 Step2: Fit an empirical semivariogram and a WLS semivriogram to get param ests.
 
 ```{r}
+library(dplyr)
+Sable_coord_P_jitter_gdf_log <- Sable_coord_P_jitter_gdf
+Sable_coord_P_jitter_gdf_log$data <- log(Sable_coord_P_jitter_gdf$data + 0.01)
+
 boxwid <- 1
 
 my_grid <- pred_grid(  
@@ -145,7 +149,7 @@ my_grid <- pred_grid(
 
 dim(my_grid)
 
-my_variog_sable_jitter_P<- variog(Sable_coord_P_jitter_gdf, trend="1st") 
+my_variog_sable_jitter_P<- variog(Sable_coord_P_jitter_gdf_log, trend="1st") 
 #my_variog_sable_2<- variog(Sable_geo_binary, trend="2nd") 
 
 plot(my_variog_sable_jitter_P)
@@ -156,7 +160,7 @@ plot(my_variog_sable_jitter_P)
 
 ##Variofit for the WLS estimate
 my_WLS_sable_jitter_P <- variofit(my_variog_sable_jitter_P,
-                        ini.cov.pars = c(100, 7), #sill, then range estimates
+                        ini.cov.pars = c(3, 5), #sill, then range estimates
                         cov.model="exponential",
                         fix.nugget=F,
                         max.dist = 300 #plot gets weird after 300
@@ -166,11 +170,70 @@ my_WLS_sable_jitter_P <- variofit(my_variog_sable_jitter_P,
 plot(my_variog_sable_jitter_P)
 lines(my_WLS_sable_jitter_P) #looks like a good fit to me.
 
-names(my_WLS_sable_jitter)
-sable.cov.pars_j <- my_WLS_sable_jitter$cov.pars #sigsq, then phi
-sable_WLS_sigsq_j <- sable.cov.pars_j[1]
-sable_WLS_phi_j <- sable.cov.pars_j[2]
-sable_WLS_tao_sq_j <- my_WLS_sable_jitter$nugget
-sable_WLS_w_j <- sable_WLS_tao_sq_j/sable_WLS_sigsq_j
+names(my_WLS_sable_jitter_P)
+sable.cov.pars_P <- my_WLS_sable_jitter_P$cov.pars #sigsq, then phi
+sable_WLS_sigsq_P <- sable.cov.pars_P[1]
+sable_WLS_phi_P <- sable.cov.pars_P[2]
+sable_WLS_tao_sq_P <- my_WLS_sable_jitter_P$nugget
+sable_WLS_w_P <- sable_WLS_tao_sq_P/sable_WLS_sigsq_P
+```
+
+Step 2.5 ML and REML parameter estimates (I'm skipping this for now)
+
+Step 3: Poisson regression, for beta values
+```{r}
+#using gdf: Sable_coord_P_jitter_gdf_log
+#df wrangle
+names(Sable_coord_P_jitter_gdf_log)
+names(Sable_coord_P_jitter_gdf)
+#df <- data.frame(Sable_coord_P_jitter_gdf_log)
+#df$LONGITUDE <- Sable_coord_P_jitter_gdf_log$Sable_geo_P.coords...1.
+#df$LATUTUDE <- Sable_coord_P_jitter_gdf_log$Sable_geo_P.coords...2.
+#names(df)
+  
+  
+#use the logged or unlogged datas here?
+#try the unlogged data
+fit_P <- glm(data~Sable_geo_P.coords...1. + Sable_geo_P.coords...2. +Sable_geo_P.coords...1.:Sable_geo_P.coords...2. , family=poisson(link="log"), data=Sable_coord_P_jitter_gdf)
+beta.starting_P <- coef(fit_P)
+beta.tuning_P <- t(chol(vcov(fit_P)))
+
+summary(fit_P)
+
+#try the logged data?
+####
+
+
+#got my betas
+```
+
+
+Step 4: run the spGLM
+```{r}
+
+
+m.jitter.P <- spGLM(data~Sable_geo_P.coords...1. + Sable_geo_P.coords...2. +Sable_geo_P.coords...1.:Sable_geo_P.coords...2., family="poisson", coords=Sable_coord_P_jitter_gdf$coords, data=Sable_coord_P_jitter_gdf, n.samples = 5000, cov.model="exponential", #change to 5000 eventually
+             starting=list("phi"=sable_WLS_phi_P,"sigma.sq"=sable_WLS_sigsq_P, "beta"=beta.starting_P, 
+                           "w"= 0), #using 0, like in the example, because this w is NOT omega
+             priors=list("phi.Unif"=c(0.01, 3), "sigma.sq.IG"=c(2,1),                                                                                                     "beta.Normal"=list(c(0,0,0,0),c(1000,1000,1000,1000))), #gonna want to make these 1000...
+             tuning=list("phi"=0.05, "sigma.sq"=0.05, "beta"= beta.tuning_P , "w" = 0.05)) 
+
+
+saveRDS(m.jitter.P, "m_jitter_P2.rds")
+names(m.jitter.P)
+plot(mcmc(m.jitter.P$p.beta.theta.samples))
+```
+
+```{r}
+m.jitter.P_3 <- spGLM(data~Sable_geo_P.coords...1. + Sable_geo_P.coords...2. +Sable_geo_P.coords...1.:Sable_geo_P.coords...2., family="poisson", coords=Sable_coord_P_jitter_gdf$coords, data=Sable_coord_P_jitter_gdf, n.samples = 5000, cov.model="exponential", #change to 5000 eventually
+             starting=list("phi"=sable_WLS_phi_P,"sigma.sq"=sable_WLS_sigsq_P, "beta"=beta.starting_P, 
+                           "w"= 0), #using 0, like in the example, because this w is NOT omega
+             priors=list("phi.Unif"=c(0.01, 3), "sigma.sq.IG"=c(2,1),                                                                                                     "beta.Normal"=list(c(0,0,0,0),c(1000,1000,1000,1000))), #gonna want to make these 1000...
+             tuning=list("phi"=0.025, "sigma.sq"=0.05, "beta"= beta.tuning_P , "w" = 0.05)) 
+
+
+saveRDS(m.jitter.P_3, "m_jitter_P3.rds")
+#names(m.jitter.P)
+#plot(mcmc(m.jitter.P$p.beta.theta.samples))
 ```
 
