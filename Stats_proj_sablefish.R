@@ -128,6 +128,43 @@ lons <- ifelse(lons<0, lons+180, lons-180)
 Sable_geo$coords[,1] <- lons
 plot(Sable_geo)
 
+#april 19
+#log-transform
+plot(Sable_geo, lambda=0)
+Sable_geo$border
+names(Sable_geo)
+#put a border on it
+#get_borders
+Sable_geo$border <- cbind(c(-10.1, 15.1, 15.1, -10.1), c(50, 50, 55, 55))
+plot(Sable_geo, lambda=0)
+
+library(ggplot2)
+df <- data.frame(Sable_geo)
+names(df)
+library(viridis)
+ggplot(df) + aes(x=LONGITUDE, y=LATITUDE, color=log(data+0.01)) + geom_point()+
+  scale_color_viridis()
+
+summary(df$data[df$data>0])
+
+hist(df$data[df$data>0 & df$data<200])
+
+#log(log(data+1.1))
+
+ggplot(df) + aes(x=LONGITUDE, y=LATITUDE, color=log(log(data+1.1))) + geom_point()+
+  scale_color_viridis()
+
+hist(df$data[df$data>0 & df$data<200])
+hist(log(log(df$data+1.1)))
+
+
+#Zero-inflated models and bayesian
+##hurlde models
+##zero-inflated poissons
+##zero-inflated spatial model 
+
+#to do
+##use bad models to map - > backup backup plan
 
 #messing with my plot 04/14/22
 #dev.off()
