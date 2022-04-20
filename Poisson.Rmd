@@ -359,5 +359,22 @@ m.jitter.P_9 <- spGLM(data~Sable_geo_P.coords...1. + Sable_geo_P.coords...2. +Sa
 plot(mcmc(m.jitter.P_9$p.beta.theta.samples)) ##BAD...
 
 
+m.jitter.P_10 <- spGLM(data~Sable_geo_P.coords...1. + Sable_geo_P.coords...2. +Sable_geo_P.coords...1.:Sable_geo_P.coords...2., family="poisson", coords=P_new$coords, data=P_new, n.samples = 1000, cov.model="exponential", #change to 5000 eventually
+             starting=list("phi"=2,"sigma.sq"=sable_WLS_sigsq_P_new, "beta"=beta.starting_P_new, 
+                           "w"= 0), #using 0, like in the example, because this w is NOT omega
+             priors=list("phi.Unif"=c(0.01, 7), "sigma.sq.IG"=c(2,1),                                                                                                     "beta.Normal"=list(c(0,0,0,0),c(1000,1000,1000,1000))), #gonna want to make these 1000...
+             tuning=list("phi"=0.05, "sigma.sq"=0.05, "beta"= beta.tuning_P_new , "w" = 0.2)) 
+
+plot(mcmc(m.jitter.P_10$p.beta.theta.samples))
+```
+
+```{r}
+m.jitter.P_t <- spGLM(data~Sable_geo_P.coords...1. + Sable_geo_P.coords...2. +Sable_geo_P.coords...1.:Sable_geo_P.coords...2., family="poisson", coords=P_new$coords, data=P_new, n.samples = 1000, cov.model="exponential", #change to 5000 eventually
+             starting=list("phi"=sable_WLS_phi_P_new,"sigma.sq"=sable_WLS_sigsq_P_new, "beta"=beta.starting_P_new, 
+                           "w"= 0), #using 0, like in the example, because this w is NOT omega
+             priors=list("phi.Unif"=c(0.01,  3), "sigma.sq.IG"=c(2,1),                                                                                                     "beta.Normal"=list(c(0,0,0,0),c(1000,1000,1000,1000))), #gonna want to make these 1000...
+             tuning=list("phi"=0.05, "sigma.sq"=0.05, "beta"= beta.tuning_P_new , "w" = 0.2)) 
+
+plot(mcmc(m.jitter.P_t$p.beta.theta.samples))
 ```
 

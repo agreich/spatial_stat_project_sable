@@ -423,7 +423,18 @@ dim(m.jitter.20$p.w.knots.samples)
 
 length(Sable_coord_binary_jitter_gdf$data)
 
+plot(mcmc(m.jitter.20$p.beta.theta.samples))
 
+Sable_coord_binary_jitter_gdf$data
+
+m.jitter.21 <- spGLM(data~Sable_geo_df_binary.LONGITUDE + Sable_geo_df_binary.LATITUDE + Sable_geo_df_binary.LONGITUDE:Sable_geo_df_binary.LATITUDE, family="binomial", coords=Sable_coord_binary_jitter_gdf$coords, data=Sable_coord_binary_jitter_gdf, n.samples = 5000, cov.model="exponential", #change to 5000 eventually
+             starting=list("phi"=sable_WLS_phi_j,"sigma.sq"=sable_WLS_sigsq_j, "beta"=beta.starting_j_3, 
+                           "w"= 0), #using 0, like in the example, because this w is NOT omega
+             priors=list("phi.Unif"=c(0.01, 5), "sigma.sq.IG"=c(2,1),                                                                                                     "beta.Normal"=list(c(0,0,0,0),c(1000,1000,1000,1000))), #gonna want to make these 1000...
+             tuning=list("phi"=0.05, "sigma.sq"=0.05, "beta"= beta.tuning_j_3 , "w" = 0.05)) 
+
+#
+#saveRDS(m.jitter.21, "m_jitter_21.rds")
 ```
 
 
@@ -450,3 +461,11 @@ MOVING FOWARD:
 PLAN A: Bug Andrew O. Finley inleya@msu.edu
 PLAN B: Hurdle or zero-inflated model spatial model
 PLAN C: 
+
+
+
+RESULTS!! #what to do next to get a smoothed surface? See hw 6
+```{r}
+
+```
+
