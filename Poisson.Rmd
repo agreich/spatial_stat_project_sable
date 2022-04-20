@@ -209,6 +209,7 @@ summary(fit_P)
 
 
 Step 4: run the spGLM
+m.jitter.P (saved as p2.rds) is the winning model right now
 ```{r}
 
 
@@ -222,18 +223,141 @@ m.jitter.P <- spGLM(data~Sable_geo_P.coords...1. + Sable_geo_P.coords...2. +Sabl
 saveRDS(m.jitter.P, "m_jitter_P2.rds")
 names(m.jitter.P)
 plot(mcmc(m.jitter.P$p.beta.theta.samples))
+
+m.jitter.P$acceptance
+names(m.jitter.P)
+
 ```
 
+This will be my last attempt:BAD
+Report interval Metrop. Acceptance rate: 0.00%: Does this mean flat lining?
+BAD  BAD  Does our one outlier matter? remove outlier from dataset?
 ```{r}
-m.jitter.P_3 <- spGLM(data~Sable_geo_P.coords...1. + Sable_geo_P.coords...2. +Sable_geo_P.coords...1.:Sable_geo_P.coords...2., family="poisson", coords=Sable_coord_P_jitter_gdf$coords, data=Sable_coord_P_jitter_gdf, n.samples = 5000, cov.model="exponential", #change to 5000 eventually
+m.jitter.P_3 <- spGLM(data~Sable_geo_P.coords...1. + Sable_geo_P.coords...2. +Sable_geo_P.coords...1.:Sable_geo_P.coords...2., family="poisson", coords=Sable_coord_P_jitter_gdf$coords, data=Sable_coord_P_jitter_gdf, n.samples = 1000, cov.model="exponential", #change to 5000 eventually
              starting=list("phi"=sable_WLS_phi_P,"sigma.sq"=sable_WLS_sigsq_P, "beta"=beta.starting_P, 
                            "w"= 0), #using 0, like in the example, because this w is NOT omega
              priors=list("phi.Unif"=c(0.01, 3), "sigma.sq.IG"=c(2,1),                                                                                                     "beta.Normal"=list(c(0,0,0,0),c(1000,1000,1000,1000))), #gonna want to make these 1000...
-             tuning=list("phi"=0.025, "sigma.sq"=0.05, "beta"= beta.tuning_P , "w" = 0.05)) 
+             tuning=list("phi"=0.05, "sigma.sq"=0.05, "beta"= beta.tuning_P , "w" = 0.025)) 
 
 
-saveRDS(m.jitter.P_3, "m_jitter_P3.rds")
+#saveRDS(m.jitter.P_3, "m_jitter_P3.rds")
 #names(m.jitter.P)
-#plot(mcmc(m.jitter.P$p.beta.theta.samples))
+plot(mcmc(m.jitter.P_3$p.beta.theta.samples))
+```
+```{r}
+m.jitter.P_4 <- spGLM(data~Sable_geo_P.coords...1. + Sable_geo_P.coords...2. +Sable_geo_P.coords...1.:Sable_geo_P.coords...2., family="poisson", coords=Sable_coord_P_jitter_gdf$coords, data=Sable_coord_P_jitter_gdf, n.samples = 1000, cov.model="exponential", #change to 5000 eventually
+             starting=list("phi"=sable_WLS_phi_P,"sigma.sq"=sable_WLS_sigsq_P, "beta"=beta.starting_P, 
+                           "w"= 0), #using 0, like in the example, because this w is NOT omega
+             priors=list("phi.Unif"=c(0.01, 3), "sigma.sq.IG"=c(2,1),                                                                                                     "beta.Normal"=list(c(0,0,0,0),c(1000,1000,1000,1000))), #gonna want to make these 1000...
+             tuning=list("phi"=0.5, "sigma.sq"=0.5, "beta"= beta.tuning_P , "w" = 0.5)) 
+```
+
+```{r}
+hist(log(Sable_coord_P_jitter_gdf$data+1))
+```
+Jitter 5. Log + 1. Fixing the logs...
+
+
+```{r}
+
+```
+
+```{r}
+P_new <- Sable_coord_P_jitter_gdf
+P_new$data <- Sable_coord_P_jitter_gdf$data+1
+#########
+
+fit_P2 <- glm(data~Sable_geo_P.coords...1. + Sable_geo_P.coords...2. +Sable_geo_P.coords...1.:Sable_geo_P.coords...2. , family=poisson(link="log"), data=P_new)
+beta.starting_P_new <- coef(fit_P2)
+beta.tuning_P_new <- t(chol(vcov(fit_P2)))
+
+summary(fit_P2)
+
+##do I need to change the variogram too? to +1 for the data? I'm not thinking that I do....
+###CHANGING STEP 2
+Sable_coord_P_jitter_gdf_log_new <- Sable_coord_P_jitter_gdf
+Sable_coord_P_jitter_gdf_log_new$data <- log(Sable_coord_P_jitter_gdf$data + 1)
+
+my_variog_sable_jitter_P_new<- variog(Sable_coord_P_jitter_gdf_log_new, trend="1st") 
+#my_variog_sable_2<- variog(Sable_geo_binary, trend="2nd") 
+
+plot(my_variog_sable_jitter_P_new)
+#plot(my_variog_sable_2)
+
+##Variofit for the WLS estimate
+my_WLS_sable_jitter_P_new <- variofit(my_variog_sable_jitter_P_new,
+                        ini.cov.pars = c(0.2, 7), #sill, then range estimates
+                        cov.model="exponential",
+                        fix.nugget=F,
+                        max.dist = 300 #plot gets weird after 300
+                        )
+
+##plot it over your variog
+plot(my_variog_sable_jitter_P_new)
+lines(my_WLS_sable_jitter_P_new) #looks like a good fit to me.
+
+names(my_WLS_sable_jitter_P_new)
+sable.cov.pars_P_new <- my_WLS_sable_jitter_P_new$cov.pars #sigsq, then phi
+sable_WLS_sigsq_P_new <- sable.cov.pars_P_new[1]
+sable_WLS_phi_P_new <- sable.cov.pars_P_new[2]
+sable_WLS_tao_sq_P_new <- my_WLS_sable_jitter_P_new$nugget
+sable_WLS_w__newP <- sable_WLS_tao_sq_P_new/sable_WLS_sigsq_P_new
+#########
+######
+
+##LAST 2 ATTEMPTS!!
+
+m.jitter.P_5 <- spGLM(data~Sable_geo_P.coords...1. + Sable_geo_P.coords...2. +Sable_geo_P.coords...1.:Sable_geo_P.coords...2., family="poisson", coords=P_new$coords, data=P_new, n.samples = 1000, cov.model="exponential", #change to 5000 eventually
+             starting=list("phi"=sable_WLS_phi_P_new,"sigma.sq"=sable_WLS_sigsq_P_new, "beta"=beta.starting_P_new, 
+                           "w"= 0), #using 0, like in the example, because this w is NOT omega
+             priors=list("phi.Unif"=c(0.01, 3), "sigma.sq.IG"=c(2,1),                                                                                                     "beta.Normal"=list(c(0,0,0,0),c(1000,1000,1000,1000))), #gonna want to make these 1000...
+             tuning=list("phi"=0.5, "sigma.sq"=0.5, "beta"= beta.tuning_P_new , "w" = 0.5))
+plot(mcmc(m.jitter.P_5$p.beta.theta.samples))
+#maybe change to smaller in V6
+
+m.jitter.P_6 <- spGLM(data~Sable_geo_P.coords...1. + Sable_geo_P.coords...2. +Sable_geo_P.coords...1.:Sable_geo_P.coords...2., family="poisson", coords=P_new$coords, data=P_new, n.samples = 1000, cov.model="exponential", #change to 5000 eventually
+             starting=list("phi"=sable_WLS_phi_P_new,"sigma.sq"=sable_WLS_sigsq_P_new, "beta"=beta.starting_P_new, 
+                           "w"= 0), #using 0, like in the example, because this w is NOT omega
+             priors=list("phi.Unif"=c(0.01, 3), "sigma.sq.IG"=c(2,1),                                                                                                     "beta.Normal"=list(c(0,0,0,0),c(1000,1000,1000,1000))), #gonna want to make these 1000...
+             tuning=list("phi"=0.25, "sigma.sq"=0.25, "beta"= beta.tuning_P_new , "w" = 0.25)) 
+
+plot(mcmc(m.jitter.P_6$p.beta.theta.samples))
+#next try smaller: 0.11 instead of 0.25 for tuning. maybe keep w at 0.5
+
+##might have set this up wrong... don't use log-tranformed data alreadyy??
+m.jitter.P_7 <- spGLM(data~Sable_geo_P.coords...1. + Sable_geo_P.coords...2. +Sable_geo_P.coords...1.:Sable_geo_P.coords...2., family="poisson", coords=P_new$coords, data=P_new, n.samples = 1000, cov.model="exponential", #change to 5000 eventually
+             starting=list("phi"=sable_WLS_phi_P_new,"sigma.sq"=sable_WLS_sigsq_P_new, "beta"=beta.starting_P_new, 
+                           "w"= 0), #using 0, like in the example, because this w is NOT omega
+             priors=list("phi.Unif"=c(0.01, 3), "sigma.sq.IG"=c(2,1),                                                                                                     "beta.Normal"=list(c(0,0,0,0),c(1000,1000,1000,1000))), #gonna want to make these 1000...
+             tuning=list("phi"=0.123, "sigma.sq"=0.123, "beta"= beta.tuning_P_new , "w" = 0.5)) 
+
+plot(mcmc(m.jitter.P_7$p.beta.theta.samples))
+
+
+#maybe try log tranforming the data FIRST, that way we have zeros. I think this is the way
+#careful to sue th right P_new, the already logged P_new (not right in the order right now)
+
+P_new$data <- log(Sable_coord_P_jitter_gdf$data+1)
+
+m.jitter.P_8 <- spGLM(data~Sable_geo_P.coords...1. + Sable_geo_P.coords...2. +Sable_geo_P.coords...1.:Sable_geo_P.coords...2., family="poisson", coords=P_new$coords, data=P_new, n.samples = 1000, cov.model="exponential", #change to 5000 eventually
+             starting=list("phi"=sable_WLS_phi_P_new,"sigma.sq"=sable_WLS_sigsq_P_new, "beta"=beta.starting_P_new, 
+                           "w"= 0), #using 0, like in the example, because this w is NOT omega
+             priors=list("phi.Unif"=c(0.01, 3), "sigma.sq.IG"=c(2,1),                                                                                                     "beta.Normal"=list(c(0,0,0,0),c(1000,1000,1000,1000))), #gonna want to make these 1000...
+             tuning=list("phi"=0.05, "sigma.sq"=0.05, "beta"= beta.tuning_P_new , "w" = 0.2)) 
+
+plot(mcmc(m.jitter.P_8$p.beta.theta.samples))
+##this looks promising!!!!!!!!!!!
+#saveRDS(m.jitter.P_8, "m_jitter_P8.rds")
+
+##widening acceptanes again..?
+m.jitter.P_9 <- spGLM(data~Sable_geo_P.coords...1. + Sable_geo_P.coords...2. +Sable_geo_P.coords...1.:Sable_geo_P.coords...2., family="poisson", coords=P_new$coords, data=P_new, n.samples = 1000, cov.model="exponential", #change to 5000 eventually
+             starting=list("phi"=sable_WLS_phi_P_new,"sigma.sq"=sable_WLS_sigsq_P_new, "beta"=beta.starting_P_new, 
+                           "w"= 0), #using 0, like in the example, because this w is NOT omega
+             priors=list("phi.Unif"=c(0.01, 3), "sigma.sq.IG"=c(2,1),                                                                                                     "beta.Normal"=list(c(0,0,0,0),c(1000,1000,1000,1000))), #gonna want to make these 1000...
+             tuning=list("phi"=0.025, "sigma.sq"=0.025, "beta"= beta.tuning_P_new , "w" = 0.2)) #change these?? to 0.05 for w?
+
+plot(mcmc(m.jitter.P_9$p.beta.theta.samples)) ##BAD...
+
+
 ```
 

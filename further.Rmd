@@ -1,0 +1,16 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Winning models:
+m.jitter.P, saved as: "m_jitter_P2.rds" in file
+m.jitter.20 (will need to run again, as it's only at 1000 right now)
+m.jitter.P_9 is good also.
+
+```{r}
+plot(cars)
+```
+
+
+
