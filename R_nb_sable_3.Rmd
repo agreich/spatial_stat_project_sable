@@ -488,11 +488,19 @@ RESULTS with 21
 #use Sp predict to predict coords?
 burnin <- 500
 #thin=10
+X.ho <- matrix(data=1, nrow=1150, ncol=4)
 
 pred <- spPredict(m.jitter.21, pred.coords = m.jitter.21$coords, pred.covars = matrix(nrow=1150, ncol=4), start = burnin, verbose = T)
+
+pred2 <- spPredict(m.jitter.21, pred.coords = m.jitter.21$coords, pred.covars = matrix(data=1,nrow=1150, ncol=4), start = burnin, verbose = T, thin=10)
+class(pred2)
+names(pred2)
+pred2$p.w.predictive.samples #holy shit it worked!!!!
+
+dim(m.jitter.21$p.beta.theta.samples)
 #shit, looks like this is going to take a while to get my predictions
 #save that prediction
-write.csv(pred, "predicted_sable_logistic.csv")
+#write.csv(pred2, "predicted_sable_logistic2.csv")
 
 pred_bind <- cbind(
   t(pred$p.w.predictive.samples),
@@ -502,7 +510,8 @@ pred_bind <- cbind(
 
 #example: 
 library(tidybayes)
-tidybayes::gather_samples(pred, lambda[i]) %>%
+library(dplyr)
+tidybayes::gather_samples(pred_bind, lambda[i]) %>%
   full_join(
     mutate(polio, i = 1:n()),
     by = "i"
@@ -514,6 +523,85 @@ tidybayes::gather_samples(pred, lambda[i]) %>%
       facet_wrap(~term, scales = "free_y")
 
 #try one_plot
+
+```
+
+Plot things
+```{r}
+library(MBA)
+?mba.surf #a smoother
+#use mba.suft, and image or image.plot
+#recover samples?
+
+############
+#example code: from the more recent spbayes paper
+#w.hat <- apply(m.i$p.w.recover.samples, 1, median)
+#w.hat.surf <- mba.surf(cbind(coords, w.hat), no.X = res, no.Y = res, extend = TRUE)$xyz.est
+#par(mar = c(5,5,0.2,0.2), cex.lab = 2, cex.axis = 2)
+#image.plot(w.hat.surf, xlab = "Easting", ylab = "Northing", xaxs = "r", yaxs = "r", col = col)
+
+
+#plot the predicted
+names(pred)
+library(ggplot2)
+library(viridis)
+ggplot() + aes(color=pred$p.w.predictive.samples, x=Longitude, y=latitude)+
+  geom_point() + scale_color_viridis()
+#the predicted graph
+
+#teh original graph
+ggplot() + aes(color=data)
+
+
+```
+
+Sample code attempt: crap
+```{r}
+x <- as.matrix(rep(1,1150),)
+weights <- rep(1, 1150)
+coords <- matrix(Sable_coord_binary_jitter_gdf$coords, ncol=2)
+#weights[coords[,1]>mean(coords[,1])] <- 10
+
+burn.in <- 0.9*1150
+sub.samps <- burn.in:1150
+
+print(summary(window(m.jitter.21$p.beta.theta.samples, start=burn.in)))
+
+beta.hat <- m.jitter.21$p.beta.theta.samples[sub.samps,"(Intercept)"]
+w.hat <- m.jitter.21$p.w.samples[,sub.samps]
+
+p.hat <- 1/(1+exp(-(x%*%beta.hat+w.hat))) 
+
+y.hat <- apply(p.hat, 2, function(x){rbinom(n=1150, prob=p.hat, size=1)}) #altered maybe in a bad way
+
+y.hat.mu <- apply(y.hat, 1, mean)
+y.hat.var <- apply(y.hat, 1, var)
+
+##Take a look
+par(mfrow=c(1,2))
+surf <- mba.surf(cbind(coords,y.hat.mu),no.X=100, no.Y=100, extend=TRUE)$xyz.est
+image(surf, main="Interpolated mean of posterior rate\n(observed rate)")
+contour(surf, add=TRUE)
+text(coords, label=paste("(",y,")",sep=""))
+
+surf <- mba.surf(cbind(coords,y.hat.var),no.X=100, no.Y=100, extend=TRUE)$xyz.est
+image(surf, main="Interpolated variance of posterior rate\n(observed #
+of trials)")
+contour(surf, add=TRUE)
+text(coords, label=paste("(",weights,")",sep=""))
+```
+
+
+Ok ok. so pred2 is gold. Pred2 worked.
+Let's make pred 3 with NO thinning next....I'll run this later
+```{r}
+pred3 <- spPredict(m.jitter.21, pred.coords = m.jitter.21$coords, pred.covars = matrix(data=1,nrow=1150, ncol=4), start = burnin, verbose = T)
+```
+
+For spGLM and spMisalignGLM the p.y.predictive.samples matrix holds posterior predictive samples 1/1+(exp(-x(s)'B-w(s))) and exp(x(s)'B+w(s)) for family binomial and poisson, respectively. Here s indexes the prediction location, B is the vector of regression coefficients, and w is the associated spatial random spatial effect. These values can be fed directly into rbinom or rpois to generate the realization from the respective distribution.
+
+Ok so...
+```{r}
 
 ```
 
