@@ -600,8 +600,40 @@ pred3 <- spPredict(m.jitter.21, pred.coords = m.jitter.21$coords, pred.covars = 
 
 For spGLM and spMisalignGLM the p.y.predictive.samples matrix holds posterior predictive samples 1/1+(exp(-x(s)'B-w(s))) and exp(x(s)'B+w(s)) for family binomial and poisson, respectively. Here s indexes the prediction location, B is the vector of regression coefficients, and w is the associated spatial random spatial effect. These values can be fed directly into rbinom or rpois to generate the realization from the respective distribution.
 
-Ok so...
+Ok so...maybe the rbinom will work now on the p.y.preditive samples...
 ```{r}
+pred2$p.w.predictive.samples
+pred2$p.y.predictive.samples
 
+y.hat <- apply(pred2$p.y.predictive.samples, 1 , mean)
+quant <- (function(x){quantile(x, prob=c(0.025, 0.5, 0.975))})
+#y.hat <- apply(pred2$p.y.predictive.samples, 1, quant)
+
+#plot(y, y.hat[2,], pch=19, cex=0.5, xlab="observed y", ylab="predicted y")
+#arrows(y[-mod], y.hat[2,-mod], y[-mod], y.hat[1,-mod], angle=90, length=0.05)
+#arrows(y[-mod], y.hat[2,-mod], y[-mod], y.hat[3,-mod], angle=90, length=0.05)
+
+ggplot() + aes(x=Sable_coord_binary_jitter_gdf$data, y=y.hat) + geom_point()
+
+df <- data.frame(Sable_coord_binary_jitter_gdf)
+df$data <- as.factor(df$data)
+
+y.vec<- as.vector(y.hat)
+y.hat.factor <- as.factor(y.vec)
+length(y.vec)
+y.vector.real <- rep(1,1150)
+y.hat.fac<-as.factor(y.vector.real)
+
+
+
+ggplot(df) +  aes(x=Sable_geo_df_binary.LONGITUDE, y=Sable_geo_df_binary.LATITUDE, color=y.hat.fac) +geom_point() + scale_color_viridis_d() +
+  labs(x="Centered Longitude", y="Latitude") +
+  theme_bw()
+
+ggplot(df) +  aes(x=Sable_geo_df_binary.LONGITUDE, y=Sable_geo_df_binary.LATITUDE, color=data) +geom_point() + scale_color_viridis_d(limits=c("1", "0")) +
+  labs(x="Centered Longitude", y="Latitude") +
+  theme_bw()
+
+range(y.hat)
 ```
 
