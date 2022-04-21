@@ -434,7 +434,9 @@ m.jitter.21 <- spGLM(data~Sable_geo_df_binary.LONGITUDE + Sable_geo_df_binary.LA
              tuning=list("phi"=0.05, "sigma.sq"=0.05, "beta"= beta.tuning_j_3 , "w" = 0.05)) 
 
 #
-#saveRDS(m.jitter.21, "m_jitter_21.rds")
+saveRDS(m.jitter.21, "m_jitter_21.rds")
+plot(mcmc(m.jitter.21$p.beta.theta.samples))
+
 ```
 
 
@@ -465,7 +467,53 @@ PLAN C:
 
 
 RESULTS!! #what to do next to get a smoothed surface? See hw 6
+Use jitter 21
+how to plot an spGLM result??
+use spBayes funtion or Oneplot?
 ```{r}
+X <- as.matrix(cbind(4, rnorm(1150))) #needs to be 4 by 1150?
+mod.21.pred <- spPredict(m.jitter.21, pred.coords = my_grid, pred.covars = m.jitter.21$p.beta.theta.samples)
+class(m.jitter.21)
+```
+
+
+Load one plot:
+```{r}
+
+```
+
+
+RESULTS with 21
+```{r}
+#use Sp predict to predict coords?
+burnin <- 500
+#thin=10
+
+pred <- spPredict(m.jitter.21, pred.coords = m.jitter.21$coords, pred.covars = matrix(nrow=1150, ncol=4), start = burnin, verbose = T)
+#shit, looks like this is going to take a while to get my predictions
+#save that prediction
+write.csv(pred, "predicted_sable_logistic.csv")
+
+pred_bind <- cbind(
+  t(pred$p.w.predictive.samples),
+  t(pred$p.y.predictive.samples)
+) 
+
+
+#example: 
+library(tidybayes)
+tidybayes::gather_samples(pred, lambda[i]) %>%
+  full_join(
+    mutate(polio, i = 1:n()),
+    by = "i"
+  ) %>%
+    ungroup() %>%
+    ggplot(aes(x=year, y=estimate)) +
+      tidybayes::stat_lineribbon(alpha=0.5) +
+      geom_point(data=polio, aes(y=cases)) +
+      facet_wrap(~term, scales = "free_y")
+
+#try one_plot
 
 ```
 
