@@ -650,8 +650,8 @@ pred3$p.y.predictive.samples
 
 pred4 <- spPredict(m.jitter.21, pred.coords = m.jitter.21$coords, pred.covars = Iden, start = burnin, verbose = T)
 
-write.csv(pred3, "pred3.csv") #the successful one, thinned
-write.csv(pred4, "pred4.csv") #the successful one
+#write.csv(pred3, "pred3.csv") #the successful one, thinned
+#write.csv(pred4, "pred4.csv") #the successful one
 
 pred4$p.y.predictive.samples #ok that failed. But pred3 is ok... might try to run again
 
@@ -664,8 +664,18 @@ pred4$p.y.predictive.samples #ok that failed. But pred3 is ok... might try to ru
 set.seed(1)
 results_3 <- rbinom(1150, size=1, prob=pred4$p.y.predictive.samples)
 results_3_fac <- as.factor(results_3)
-ggplot(df) +  aes(x=Sable_geo_df_binary.LONGITUDE, y=Sable_geo_df_binary.LATITUDE, color=results_3_fac) +geom_point() + scale_color_viridis_d() +
+ggplot(df) +  aes(x=Sable_geo_df_binary.LONGITUDE, y=Sable_geo_df_binary.LATITUDE, color=results_3_fac) +geom_point() + scale_color_viridis_d(limits=c("1", "0")) +
   labs(x="Centered Longitude", y="Latitude") +
   theme_bw()
+```
+MBA surf
+going to work on other things. Here is what is important:
+df(right now for the ggplot)
+Sable_coord_binary_jitter_gdf
+pred3
+To do next:
+MBA surf. Other stuff too?
+```{r}
+write.csv(Sable_coord_binary_jitter_gdf, "Sable_coord_binary_jitter_gdf.csv")
 ```
 
