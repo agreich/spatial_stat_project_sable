@@ -679,3 +679,30 @@ MBA surf. Other stuff too?
 write.csv(Sable_coord_binary_jitter_gdf, "Sable_coord_binary_jitter_gdf.csv")
 ```
 
+
+
+Surfs up! smoothed map time!!
+```{r}
+library(MBA)
+?mba.surf
+#might need non-factor resutls, but trying it first with factor results
+surfs_up_pred <- mba.surf(cbind(Sable_coord_binary_jitter_gdf$coords,results_3_fac),
+                          no.X=100,
+                          no.Y=100,
+                          extend=T
+                          )
+est_surf_pred <- surfs_up_pred$xyz.est
+image(est_surf_pred)
+points(Sable_coord_binary_jitter_gdf$coords)
+contour(est_surf_pred, add=T ) #this is it!! But might try without the points
+
+image(est_surf_pred)
+contour(est_surf_pred, add=T ) #this is the predticed without he points
+
+#let's look at og data surf with the points
+
+#let's look at an og data surf without the points
+  
+#surfs
+```
+
