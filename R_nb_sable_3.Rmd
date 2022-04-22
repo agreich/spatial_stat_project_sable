@@ -636,4 +636,19 @@ ggplot(df) +  aes(x=Sable_geo_df_binary.LONGITUDE, y=Sable_geo_df_binary.LATITUD
 
 range(y.hat)
 ```
+Let's run a prediction with the fixed identity matrix
+```{r}
+Iden <- matrix(data=1, nrow=1150, ncol=4)
+Iden[,2] <- Sable_coord_binary_jitter_gdf$coords[,1]
+Iden[,3] <- Sable_coord_binary_jitter_gdf$coords[,2]
+Iden[,4] <- Sable_coord_binary_jitter_gdf$coords[,1]*Sable_coord_binary_jitter_gdf$coords[,2]
+
+
+pred3 <- spPredict(m.jitter.21, pred.coords = m.jitter.21$coords, pred.covars = Iden, start = burnin, verbose = T, thin=10)
+
+pred3$p.y.predictive.samples
+
+pred4 <- spPredict(m.jitter.21, pred.coords = m.jitter.21$coords, pred.covars = Iden, start = burnin, verbose = T)
+
+```
 
