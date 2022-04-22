@@ -701,8 +701,23 @@ contour(est_surf_pred, add=T ) #this is the predticed without he points
 
 #let's look at og data surf with the points
 
+surfs_up_obs <- mba.surf(cbind(Sable_coord_binary_jitter_gdf$coords,df$data),
+                          no.X=100,
+                          no.Y=100,
+                          extend=T
+                          )
+est_surf_obs <- surfs_up_obs$xyz.est
+
+image(est_surf_obs)
+points(Sable_coord_binary_jitter_gdf$coords)
+contour(est_surf_obs, add=T )
+
+
 #let's look at an og data surf without the points
-  
+image(est_surf_obs)
+contour(est_surf_obs, add=T )  
+
+
 #surfs
 ```
 
