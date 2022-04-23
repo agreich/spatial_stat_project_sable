@@ -721,3 +721,10 @@ contour(est_surf_obs, add=T )
 #surfs
 ```
 
+
+
+Can I add alaska background lines/shape to my map?
+```{r}
+
+```
+
