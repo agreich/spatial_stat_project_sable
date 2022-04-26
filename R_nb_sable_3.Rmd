@@ -728,3 +728,35 @@ Can I add alaska background lines/shape to my map?
 
 ```
 
+Effective sample size
+```{r}
+library(coda)
+effectiveSize(m.jitter.21$p.beta.theta.samples)
+#that's really bad. Let's not include that....
+cor(m.jitter.21$p.beta.theta.samples)
+```
+
+04/25/22
+Try with no trend: just intercept?
+Same WLS, need new GLM
+```{r}
+glm_int <- glm(data ~ 1, data=Sable_coord_binary_jitter_gdf, family=binomial(link="logit"))
+summary(glm_int)
+names(glm_int)
+glm_int$coef
+int_glm <- glm_int$coef
+
+#need that weird transpose from the example
+#beta.tun.int <- 
+
+m.jitter.int <- spGLM(data~1, family="binomial", coords=Sable_coord_binary_jitter_gdf$coords, data=Sable_coord_binary_jitter_gdf, n.samples = 1000, cov.model="exponential", #change to 5000 eventually
+             starting=list("phi"=sable_WLS_phi_j,"sigma.sq"=sable_WLS_sigsq_j, "beta"=int_glm, 
+                           "w"= 0), #using 0, like in the example, because this w is NOT omega
+             priors=list("phi.Unif"=c(0.01, 5), "sigma.sq.IG"=c(2,1),                                                                                                     "beta.Normal"=list(c(0),c(1000))), #gonna want to make these 1000...
+             tuning=list("phi"=0.05, "sigma.sq"=0.05, "beta"= 0.05, "w" = 0.05)) 
+
+
+library(coda)
+#plot
+```
+
