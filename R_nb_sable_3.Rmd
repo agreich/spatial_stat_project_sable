@@ -664,7 +664,7 @@ pred4$p.y.predictive.samples #ok that failed. But pred3 is ok... might try to ru
 set.seed(1)
 results_3 <- rbinom(1150, size=1, prob=pred4$p.y.predictive.samples)
 results_3_fac <- as.factor(results_3)
-ggplot(df) +  aes(x=Sable_geo_df_binary.LONGITUDE, y=Sable_geo_df_binary.LATITUDE, color=results_3_fac) +geom_point() + scale_color_viridis_d(limits=c("1", "0")) +
+ggplot(df) +  aes(x=Sable_geo_df_binary.LONGITUDE, y=Sable_geo_df_binary.LATITUDE, color=results_3_fac) +geom_point() + scale_color_viridis_d(limits=c("1", "0"), name="data") +
   labs(x="Centered Longitude", y="Latitude") +
   theme_bw()
 ```
@@ -758,5 +758,13 @@ m.jitter.int <- spGLM(data~1, family="binomial", coords=Sable_coord_binary_jitte
 
 library(coda)
 #plot
+```
+
+Traceplots
+```{r}
+#plot them traces for m.jitter.21
+plot(mcmc(cbind(m.jitter.21$p.beta.theta.samples)), density=F)
+#this will be figure 3
+
 ```
 
